@@ -1,0 +1,29 @@
+<div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h3 class="mb-4">Assign Subjects to ${teacher.surname} ${teacher.firstname}</h3>
+
+          <form action="/admin/teachers/assign/${teacher._id}" method="POST">
+
+            <div class="mb-3">
+              <label class="form-label">Select Subjects</label>
+              <select name="assignedSubjects" class="form-select" multiple>
+                <% subjects.forEach(subject => { %>
+                  <option value="<%= subject._id %>"
+                    <%= teacher.assignedSubjects.some(s => s._id.toString() === subject._id.toString()) ? 'selected' : '' %>>
+                    <%= subject.name %>
+                  </option>
+                <% }) %>
+              </select>
+              <small class="text-muted">Hold Ctrl to select multiple</small>
+            </div>
+
+            <button type="submit" class="btn btn-warning w-100">Update Assignment</button>
+            <a href="/admin/teachers" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>

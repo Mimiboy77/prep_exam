@@ -1,0 +1,64 @@
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow">
+      <div class="card-body p-4">
+        <h3 class="mb-4">Edit Question</h3>
+
+        <form action="/teacher/questions/edit/<%= question._id %>" method="POST">
+
+          <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <select name="subjectId" class="form-select" required>
+              <option value="">-- Select Subject --</option>
+              <% subjects.forEach(subject => { %>
+                <option value="<%= subject._id %>"
+                  <%= question.subjectId._id.toString() === subject._id.toString() ? 'selected' : '' %>>
+                  <%= subject.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Syllabus Topic</label>
+            <select name="syllabusId" class="form-select" required>
+              <option value="">-- Select Topic --</option>
+              <% syllabus.forEach(item => { %>
+                <option value="<%= item._id %>"
+                  <%= question.syllabusId._id.toString() === item._id.toString() ? 'selected' : '' %>>
+                  <%= item.topic %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Question Text</label>
+            <textarea name="questionText" class="form-control" rows="3" required><%= question.questionText %></textarea>
+          </div>
+
+          <% question.options.forEach((option, index) => { %>
+            <div class="mb-3">
+              <label class="form-label">Option <%= String.fromCharCode(65 + index) %></label>
+              <input type="text" name="options" class="form-control" value="<%= option %>" required />
+            </div>
+          <% }) %>
+
+          <div class="mb-3">
+            <label class="form-label">Correct Answer</label>
+            <input type="text" name="answer" class="form-control" value="<%= question.answer %>" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Explanation (optional)</label>
+            <textarea name="explanation" class="form-control" rows="2"><%= question.explanation %></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-warning w-100">Update Question</button>
+          <a href="/teacher/questions" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

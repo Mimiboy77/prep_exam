@@ -1,0 +1,24 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-body p-4">
+        <h3 class="mb-4">Filter Students by School</h3>
+
+        <form action="/admin/students" method="GET">
+          <div class="mb-3">
+            <label class="form-label">Select School</label>
+            <select name="schoolId" class="form-select" required>
+              <option value="">-- Select School --</option>
+              <% schools.forEach(school => { %>
+                <option value="<%= school._id %>"><%= school.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Filter</button>
+          <a href="/admin/students" class="btn btn-secondary w-100 mt-2">View All</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

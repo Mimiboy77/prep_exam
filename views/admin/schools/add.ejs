@@ -1,0 +1,26 @@
+<div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h3 class="mb-4">Add School</h3>
+
+          <form action="/admin/schools/add" method="POST">
+
+            <div class="mb-3">
+              <label class="form-label">School Name</label>
+              <input type="text" name="name" class="form-control" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Location</label>
+              <input type="text" name="location" class="form-control" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Add School</button>
+            <a href="/admin/schools" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,65 @@
+<h2 class="mb-4">Welcome, <%= student.surname %> <%= student.firstname %>!</h2>
+
+<div class="row g-4 mb-4">
+
+  <div class="col-md-4">
+    <div class="card text-white bg-primary shadow">
+      <div class="card-body">
+        <h5 class="card-title">Available Exams</h5>
+        <a href="/student/exams" class="btn btn-light btn-sm mt-2">View Exams</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-success shadow">
+      <div class="card-body">
+        <h5 class="card-title">My Results</h5>
+        <a href="/student/results" class="btn btn-light btn-sm mt-2">View Results</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-warning shadow">
+      <div class="card-body">
+        <h5 class="card-title">My Progress</h5>
+        <a href="/student/progress" class="btn btn-light btn-sm mt-2">View Progress</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Recent Exams -->
+<h4 class="mb-3">Recent Exams</h4>
+<table class="table table-bordered table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th>#</th>
+      <th>Subject</th>
+      <th>Score</th>
+      <th>Status</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (recentExams.length === 0) { %>
+      <tr><td colspan="5" class="text-center">No exams taken yet.</td></tr>
+    <% } else { %>
+      <% recentExams.forEach((exam, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= exam.examId && exam.examId.subjectId ? exam.examId.subjectId.name : 'N/A' %></td>
+          <td><%= exam.score %>%</td>
+          <td>
+            <span class="badge bg-<%= exam.status === 'completed' ? 'success' : 'warning' %>">
+              <%= exam.status %>
+            </span>
+          </td>
+          <td><%= exam.dateTaken.toDateString() %></td>
+        </tr>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>

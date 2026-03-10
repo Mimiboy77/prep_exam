@@ -1,0 +1,36 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-body p-4">
+        <h3 class="mb-4">Exam Settings — <%= exam.subjectId.name %></h3>
+
+        <form action="/admin/exams/settings/<%= exam._id %>" method="POST">
+
+          <div class="mb-3">
+            <label class="form-label">Timer (minutes)</label>
+            <input type="number" name="timer" class="form-control" value="<%= exam.timer %>" min="1" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Retake Policy</label>
+            <select name="retakePolicy" class="form-select" required>
+              <option value="once"      <%= exam.retakePolicy === 'once'      ? 'selected' : '' %>>Once</option>
+              <option value="unlimited" <%= exam.retakePolicy === 'unlimited' ? 'selected' : '' %>>Unlimited</option>
+              <option value="none"      <%= exam.retakePolicy === 'none'      ? 'selected' : '' %>>None</option>
+            </select>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" name="randomize" class="form-check-input" id="randomize"
+              <%= exam.randomize ? 'checked' : '' %> />
+            <label class="form-check-label" for="randomize">Randomize Questions</label>
+          </div>
+
+          <button type="submit" class="btn btn-warning w-100">Update Settings</button>
+          <a href="/admin/exams" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

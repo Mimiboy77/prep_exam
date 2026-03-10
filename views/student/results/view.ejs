@@ -1,0 +1,60 @@
+<div class="mb-4">
+  <a href="/student/results" class="btn btn-secondary btn-sm mb-3">Back to Results</a>
+  <h2>Exam Result — <%= studentExam.examId.subjectId.name %></h2>
+  <p><strong>Date Taken:</strong> <%= studentExam.dateTaken.toDateString() %></p>
+  <p>
+    <strong>Score:</strong>
+    <span class="badge bg-<%= studentExam.score >= 50 ? 'success' : 'danger' %> fs-6">
+      <%= studentExam.score %>%
+    </span>
+  </p>
+</div>
+
+<h4 class="mb-3">Question Review</h4>
+
+<% questions.forEach((question, index) => { %>
+
+  <%
+    // Find what this student answered for this question
+    const studentAnswer = studentExam.answers.find(
+      a => a.questionId.toString() === question._id.toString()
+    );
+    const selected  = studentAnswer ? studentAnswer.selectedOption : 'Not answered';
+    const isCorrect = selected === question.answer;
+  %>
+
+  <div class="card mb-3 border-<%= isCorrect ? 'success' : 'danger' %>">
+    <div class="card-header bg-<%= isCorrect ? 'success' : 'danger' %> text-white">
+      Question <%= index + 1 %> —
+      <%= isCorrect ? 'Correct ✓' : 'Wrong ✗' %>
+    </div>
+    <div class="card-body">
+
+      <p class="fw-bold"><%= question.questionText %></p>
+
+      <% question.options.forEach(option => { %>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" disabled
+            <%= selected === option ? 'checked' : '' %> />
+          <label class="form-check-label
+            <%= option === question.answer ? 'text-success fw-bold' : '' %>
+            <%= selected === option && option !== question.answer ? 'text-danger' : '' %>">
+            <%= option %>
+            <% if (option === question.answer) { %> ✓ <% } %>
+            <% if (selected === option && option !== question.answer) { %> ✗ <% } %>
+          </label>
+        </div>
+      <% }) %>
+
+      <% if (question.explanation) { %>
+        <div class="alert alert-info mt-3 mb-0">
+          <strong>Explanation:</strong> <%= question.explanation %>
+        </div>
+      <% } %>
+
+    </div>
+  </div>
+
+<% }) %>
+
+<a href="/student/exams" class="btn btn-primary mt-2">Take Another Exam</a>

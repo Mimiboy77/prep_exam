@@ -1,0 +1,37 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Exams</h2>
+  <a href="/admin/exams/create" class="btn btn-primary">Create Exam</a>
+</div>
+
+<table class="table table-bordered table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th>#</th>
+      <th>Subject</th>
+      <th>Questions</th>
+      <th>Timer (mins)</th>
+      <th>Retake Policy</th>
+      <th>Randomized</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (exams.length === 0) { %>
+      <tr><td colspan="7" class="text-center">No exams found.</td></tr>
+    <% } else { %>
+      <% exams.forEach((exam, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= exam.subjectId.name %></td>
+          <td><%= exam.questionCount %></td>
+          <td><%= exam.timer %></td>
+          <td><%= exam.retakePolicy %></td>
+          <td><%= exam.randomize ? 'Yes' : 'No' %></td>
+          <td>
+            <a href="/admin/exams/settings/<%= exam._id %>" class="btn btn-sm btn-warning">Settings</a>
+          </td>
+        </tr>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>

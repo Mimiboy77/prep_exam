@@ -1,0 +1,74 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>My Progress</h2>
+  <a href="/student/results" class="btn btn-secondary">Back to Results</a>
+</div>
+
+<!-- Overall Stats -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card text-white bg-primary shadow">
+      <div class="card-body">
+        <h5 class="card-title">Total Exams Taken</h5>
+        <p class="display-6"><%= totalExams %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress by Subject -->
+<h4 class="mb-3">Performance by Subject</h4>
+<table class="table table-bordered table-hover mb-4">
+  <thead class="table-dark">
+    <tr>
+      <th>#</th>
+      <th>Subject</th>
+      <th>Attempts</th>
+      <th>Average Score</th>
+      <th>Performance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (progress.length === 0) { %>
+      <tr><td colspan="5" class="text-center">No progress data yet. Take an exam first!</td></tr>
+    <% } else { %>
+      <% progress.forEach((item, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= item.subject %></td>
+          <td><%= item.attempts %></td>
+          <td>
+            <span class="badge bg-<%= item.average >= 50 ? 'success' : 'danger' %>">
+              <%= item.average %>%
+            </span>
+          </td>
+          <td>
+            <div class="progress">
+              <div class="progress-bar bg-<%= item.average >= 50 ? 'success' : 'danger' %>"
+                style="width: <%= item.average %>%">
+                <%= item.average %>%
+              </div>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>
+
+<!-- Recommendations -->
+<h4 class="mb-3">Recommendations</h4>
+<% if (recommendations.length === 0) { %>
+  <div class="alert alert-success">
+    Great job! You are performing well in all subjects. Keep it up!
+  </div>
+<% } else { %>
+  <% recommendations.forEach(rec => { %>
+    <div class="alert alert-warning">
+      <strong><%= rec.topic %></strong> — Average Score: <%= rec.averageScore %>%
+      <br/>
+      <%= rec.message %>
+    </div>
+  <% }) %>
+<% } %>
+
+<a href="/student/exams" class="btn btn-primary mt-2">Take an Exam</a>

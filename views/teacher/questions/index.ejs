@@ -1,0 +1,35 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>My Questions</h2>
+  <a href="/teacher/questions/add" class="btn btn-primary">Add Question</a>
+</div>
+
+<table class="table table-bordered table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th>#</th>
+      <th>Subject</th>
+      <th>Syllabus Topic</th>
+      <th>Question</th>
+      <th>Answer</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (questions.length === 0) { %>
+      <tr><td colspan="6" class="text-center">No questions found. Start adding some!</td></tr>
+    <% } else { %>
+      <% questions.forEach((question, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= question.subjectId.name %></td>
+          <td><%= question.syllabusId.topic %></td>
+          <td><%= question.questionText %></td>
+          <td><%= question.answer %></td>
+          <td>
+            <a href="/teacher/questions/edit/<%= question._id %>" class="btn btn-sm btn-warning">Edit</a>
+          </td>
+        </tr>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>

@@ -1,0 +1,64 @@
+<h2 class="mb-4">Admin Dashboard</h2>
+
+<div class="row g-4">
+
+  <div class="col-md-4">
+    <div class="card text-white bg-primary shadow">
+      <div class="card-body">
+        <h5 class="card-title">Teachers</h5>
+        <p class="display-6"><%= teacherCount %></p>
+        <a href="/admin/teachers" class="btn btn-light btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-success shadow">
+      <div class="card-body">
+        <h5 class="card-title">Students</h5>
+        <p class="display-6"><%= studentCount %></p>
+        <a href="/admin/students" class="btn btn-light btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-warning shadow">
+      <div class="card-body">
+        <h5 class="card-title">Subjects</h5>
+        <p class="display-6"><%= subjectCount %></p>
+        <a href="/admin/subjects" class="btn btn-light btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-danger shadow">
+      <div class="card-body">
+        <h5 class="card-title">Exams</h5>
+        <p class="display-6"><%= examCount %></p>
+        <a href="/admin/exams" class="btn btn-light btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-secondary shadow">
+      <div class="card-body">
+        <h5 class="card-title">Schools</h5>
+        <p class="display-6"><%= schoolCount %></p>
+        <a href="/admin/schools" class="btn btn-light btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-dark shadow">
+      <div class="card-body">
+        <h5 class="card-title">Questions</h5>
+        <p class="display-6"><%= questionCount %></p>
+      </div>
+    </div>
+  </div>
+
+</div>

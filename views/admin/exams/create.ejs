@@ -1,0 +1,50 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-body p-4">
+        <h3 class="mb-4">Create Exam</h3>
+
+        <form action="/admin/exams/create" method="POST">
+
+          <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <select name="subjectId" class="form-select" required>
+              <option value="">-- Select Subject --</option>
+              <% subjects.forEach(subject => { %>
+                <option value="<%= subject._id %>"><%= subject.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Number of Questions</label>
+            <input type="number" name="questionCount" class="form-control" min="1" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Timer (minutes)</label>
+            <input type="number" name="timer" class="form-control" min="1" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Retake Policy</label>
+            <select name="retakePolicy" class="form-select" required>
+              <option value="once">Once</option>
+              <option value="unlimited">Unlimited</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" name="randomize" class="form-check-input" id="randomize" />
+            <label class="form-check-label" for="randomize">Randomize Questions</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Create Exam</button>
+          <a href="/admin/exams" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

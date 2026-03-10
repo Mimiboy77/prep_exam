@@ -1,0 +1,97 @@
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow">
+      <div class="card-body p-4">
+        <h3 class="mb-4">Add Question</h3>
+
+        <form action="/teacher/questions/add" method="POST">
+
+          <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <select name="subjectId" class="form-select" id="subjectSelect" required>
+              <option value="">-- Select Subject --</option>
+              <% subjects.forEach(subject => { %>
+                <option value="<%= subject._id %>"><%= subject.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Syllabus Topic</label>
+            <select name="syllabusId" class="form-select" id="syllabusSelect" required>
+              <option value="">-- Select Topic --</option>
+              <% syllabus.forEach(item => { %>
+                <option value="<%= item._id %>"><%= item.topic %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Question Text</label>
+            <textarea name="questionText" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Option A</label>
+            <input type="text" name="options" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Option B</label>
+            <input type="text" name="options" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Option C</label>
+            <input type="text" name="options" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Option D</label>
+            <input type="text" name="options" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Correct Answer</label>
+            <input type="text" name="answer" class="form-control"
+              placeholder="Must match one of the options exactly" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Explanation (optional)</label>
+            <textarea name="explanation" class="form-control" rows="2"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Save Question</button>
+          <a href="/teacher/questions" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auto load syllabus when subject changes -->
+<script>
+  document.getElementById('subjectSelect').addEventListener('change', async function () {
+    const subjectId = this.value;
+    const syllabusSelect = document.getElementById('syllabusSelect');
+
+    // Clear current options
+    syllabusSelect.innerHTML = '<option value="">-- Select Topic --</option>';
+
+    if (!subjectId) return;
+
+    // Fetch syllabus for selected subject
+    const res  = await fetch(`/teacher/syllabus/${subjectId}`);
+    const data = await res.json();
+
+    // Populate syllabus dropdown
+    data.forEach(item => {
+      const option = document.createElement('option');
+      option.value       = item._id;
+      option.textContent = item.topic;
+      syllabusSelect.appendChild(option);
+    });
+  });
+</script>
