@@ -45,4 +45,14 @@ router.post('/exams/settings/:id', adminController.postExamSettings);
 router.get('/students',          adminController.getStudents);
 router.get('/students/filter',   adminController.filterStudents);
 router.get('/students/:id',      adminController.viewStudent);
+// --- Delete Student Performance ---
+router.post('/students/performance/delete/:id', adminController.deleteStudentExam);
+// --- Reset Student Password ---
+router.post('/students/reset-password/:id', adminController.resetStudentPassword);
+// --- Edit Student ---
+router.get('/students/edit/:id',  adminController.getEditStudent);
+router.post('/students/edit/:id', adminController.postEditStudent);
+// --- Reports ---
+router.get('/report',          adminController.getReport);
+router.get('/report/download', adminController.downloadReport);
 module.exports = router;

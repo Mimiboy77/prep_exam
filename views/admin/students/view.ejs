@@ -1,12 +1,48 @@
 <div class="mb-4">
-  <a href="/admin/students" class="btn btn-secondary btn-sm mb-3">Back to Students</a>
+  <a href="/admin/students" class="btn btn-secondary btn-sm mb-3">← Back to Students</a>
+
   <h2><%= student.surname %> <%= student.firstname %></h2>
-  <p><strong>Username:</strong> <%= student.username %></p>
-  <p><strong>Class:</strong> <%= student.class %></p>
-  <p><strong>Department:</strong> <%= student.department %></p>
-  <p><strong>School:</strong> <%= student.schoolId ? student.schoolId.name : 'N/A' %></p>
+
+  <table class="table table-bordered w-auto mb-3">
+    <tr>
+      <th>Username</th>
+      <td><strong><%= student.username %></strong></td>
+    </tr>
+    <tr>
+      <th>Class</th>
+      <td><%= student.class %></td>
+    </tr>
+    <tr>
+      <th>Department</th>
+      <td><%= student.department %></td>
+    </tr>
+    <tr>
+      <th>School</th>
+      <td><%= student.schoolId ? student.schoolId.name : 'N/A' %></td>
+    </tr>
+  </table>
+
+  <!-- Action Buttons -->
+  <div class="d-flex gap-2 mt-3 mb-4">
+
+    <!-- Edit Profile Button -->
+    <a href="/admin/students/edit/<%= student._id %>" class="btn btn-primary btn-sm">
+      ✏️ Edit Profile
+    </a>
+
+    <!-- Reset Password Button -->
+    <form action="/admin/students/reset-password/<%= student._id %>" method="POST"
+      onsubmit="return confirm('Reset password for <%= student.surname %> <%= student.firstname %>? Their new password will be: <%= student.surname.toLowerCase() %>')">
+      <button type="submit" class="btn btn-warning btn-sm">
+        🔑 Reset Password to Default
+      </button>
+    </form>
+
+  </div>
+
 </div>
 
+<!-- Exam History -->
 <h4 class="mb-3">Exam History</h4>
 <table class="table table-bordered table-hover">
   <thead class="table-dark">
@@ -16,19 +52,35 @@
       <th>Score</th>
       <th>Status</th>
       <th>Date Taken</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     <% if (studentExams.length === 0) { %>
-      <tr><td colspan="5" class="text-center">No exams taken yet.</td></tr>
+      <tr><td colspan="6" class="text-center">No exams taken yet.</td></tr>
     <% } else { %>
-      <% studentExams.forEach((exam, index) => { %>
+      <% studentExams.forEach(function(exam, index) { %>
         <tr>
           <td><%= index + 1 %></td>
           <td><%= exam.examId && exam.examId.subjectId ? exam.examId.subjectId.name : 'N/A' %></td>
-          <td><%= exam.score %>%</td>
-          <td><span class="badge bg-<%= exam.status === 'completed' ? 'success' : 'warning' %>"><%= exam.status %></span></td>
+          <td>
+            <span class="badge bg-<%= exam.score >= 50 ? 'success' : 'danger' %>">
+              <%= exam.score %>%
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-<%= exam.status === 'completed' ? 'success' : 'warning' %>">
+              <%= exam.status %>
+            </span>
+          </td>
           <td><%= exam.dateTaken.toDateString() %></td>
+          <td>
+            <form action="/admin/students/performance/delete/<%= exam._id %>"
+              method="POST"
+              onsubmit="return confirm('Are you sure you want to delete this performance record?')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
         </tr>
       <% }) %>
     <% } %>

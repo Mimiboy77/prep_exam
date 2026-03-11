@@ -22,5 +22,8 @@ router.get('/results/:id',  studentController.viewResult);
 
 // --- Progress ---
 router.get('/progress', studentController.getProgress);
+// --- Profile ---
+router.get('/profile',  studentController.getProfile);
+router.post('/profile', studentController.postProfile);
 
 module.exports = router;

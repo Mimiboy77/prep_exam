@@ -53,20 +53,15 @@ const fuzzyMatch = (newQuestion, existingQuestions) => {
 const calculateScore = (studentAnswers, questions) => {
   let correct = 0;
 
-  // Loop through each question and check student answer
   questions.forEach(question => {
-    // Find the student's answer for this question
     const studentAnswer = studentAnswers.find(
-      a => a.questionId.toString() === question._id.toString()
+      a => a.questionId && a.questionId.toString() === question._id.toString()
     );
-
-    // If answer exists and matches correct answer, count it
     if (studentAnswer && studentAnswer.selectedOption === question.answer) {
       correct++;
     }
   });
 
-  // Return score as percentage rounded to 2 decimal places
   return parseFloat(((correct / questions.length) * 100).toFixed(2));
 };
 

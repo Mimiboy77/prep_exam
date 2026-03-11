@@ -1,0 +1,68 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header bg-dark text-white">
+        <h4 class="mb-0">My Profile</h4>
+      </div>
+      <div class="card-body p-4">
+
+        <form action="/student/profile" method="POST">
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Surname</label>
+            <input type="text" name="surname" class="form-control"
+              value="<%= student.surname %>" required />
+            <small class="text-muted">
+              Changing your surname will automatically update your password to the new surname.
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Firstname</label>
+            <input type="text" name="firstname" class="form-control"
+              value="<%= student.firstname %>" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Class</label>
+            <input type="text" name="studentClass" class="form-control"
+              value="<%= student.class %>" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Department</label>
+            <select name="department" class="form-select" required>
+              <option value="">-- Select Department --</option>
+              <option value="Science"    <%= student.department === 'Science'    ? 'selected' : '' %>>Science</option>
+              <option value="Art"        <%= student.department === 'Art'        ? 'selected' : '' %>>Art</option>
+              <option value="Commercial" <%= student.department === 'Commercial' ? 'selected' : '' %>>Commercial</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">School</label>
+            <select name="schoolId" class="form-select" required>
+              <option value="">-- Select School --</option>
+              <% schools.forEach(function(school) { %>
+                <option value="<%= school._id %>"
+                  <%= student.schoolId && student.schoolId._id.toString() === school._id.toString() ? 'selected' : '' %>>
+                  <%= school.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Username</label>
+            <input type="text" class="form-control" value="<%= student.username %>" disabled />
+            <small class="text-muted">Username cannot be changed.</small>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+          <a href="/student/dashboard" class="btn btn-secondary w-100 mt-2">Cancel</a>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

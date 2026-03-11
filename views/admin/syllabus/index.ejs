@@ -1,54 +1,49 @@
-<%- include('../../../layouts/main', { body: `
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Syllabus</h2>
+  <a href="/admin/syllabus/add" class="btn btn-primary">Add Topic</a>
+</div>
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Syllabus</h2>
-    <a href="/admin/syllabus/add" class="btn btn-primary">Add Topic</a>
-  </div>
-
-  <!-- Filter by Subject -->
-  <form action="/admin/syllabus" method="GET" class="mb-4">
-    <div class="row">
-      <div class="col-md-4">
-        <select name="subjectId" class="form-select" onchange="this.form.submit()">
-          <option value="">-- All Subjects --</option>
-          <% subjects.forEach(subject => { %>
-            <option value="<%= subject._id %>"
-              <%= selectedSubject === subject._id.toString() ? 'selected' : '' %>>
-              <%= subject.name %>
-            </option>
-          <% }) %>
-        </select>
-      </div>
-    </div>
-  </form>
-
-  <table class="table table-bordered table-hover">
-    <thead class="table-dark">
-      <tr>
-        <th>#</th>
-        <th>Subject</th>
-        <th>Topic</th>
-        <th>Description</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (syllabus.length === 0) { %>
-        <tr><td colspan="5" class="text-center">No syllabus topics found.</td></tr>
-      <% } else { %>
-        <% syllabus.forEach((item, index) => { %>
-          <tr>
-            <td><%= index + 1 %></td>
-            <td><%= item.subjectId.name %></td>
-            <td><%= item.topic %></td>
-            <td><%= item.description || 'N/A' %></td>
-            <td>
-              <a href="/admin/syllabus/edit/${item._id}" class="btn btn-sm btn-warning">Edit</a>
-            </td>
-          </tr>
+<form action="/admin/syllabus" method="GET" class="mb-4">
+  <div class="row">
+    <div class="col-md-4">
+      <select name="subjectId" class="form-select" onchange="this.form.submit()">
+        <option value="">-- All Subjects --</option>
+        <% subjects.forEach(function(subject) { %>
+          <option value="<%= subject._id %>"
+            <%= selectedSubject === subject._id.toString() ? 'selected' : '' %>>
+            <%= subject.name %>
+          </option>
         <% }) %>
-      <% } %>
-    </tbody>
-  </table>
+      </select>
+    </div>
+  </div>
+</form>
 
-` }) %>
+<table class="table table-bordered table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th>#</th>
+      <th>Subject</th>
+      <th>Topic</th>
+      <th>Description</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (syllabus.length === 0) { %>
+      <tr><td colspan="5" class="text-center">No syllabus topics found.</td></tr>
+    <% } else { %>
+      <% syllabus.forEach(function(item, index) { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= item.subjectId.name %></td>
+          <td><%= item.topic %></td>
+          <td><%= item.description || 'N/A' %></td>
+          <td>
+            <a href="/admin/syllabus/edit/<%= item._id %>" class="btn btn-sm btn-warning">Edit</a>
+          </td>
+        </tr>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>

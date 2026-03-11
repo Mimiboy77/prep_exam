@@ -8,10 +8,22 @@
 
           <div class="mb-3">
             <label class="form-label">Subject</label>
-            <select name="subjectId" class="form-select" required>
+            <select name="subjectId" class="form-select" id="subjectSelect" required>
               <option value="">-- Select Subject --</option>
-              <% subjects.forEach(subject => { %>
+              <% subjects.forEach(function(subject) { %>
                 <option value="<%= subject._id %>"><%= subject.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Syllabus Topic <span class="text-muted">(optional — leave blank for all topics)</span></label>
+            <select name="syllabusId" class="form-select" id="syllabusSelect">
+              <option value="">-- All Topics --</option>
+              <% syllabus.forEach(function(item) { %>
+                <option value="<%= item._id %>" data-subject="<%= item.subjectId._id %>">
+                  <%= item.subjectId.name %> — <%= item.topic %>
+                </option>
               <% }) %>
             </select>
           </div>
@@ -36,7 +48,7 @@
           </div>
 
           <div class="mb-3 form-check">
-            <input type="checkbox" name="randomize" class="form-check-input" id="randomize" />
+            <input type="checkbox" name="randomize" class="form-check-input" id="randomize" checked />
             <label class="form-check-label" for="randomize">Randomize Questions</label>
           </div>
 
@@ -48,3 +60,23 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Filter syllabus topics when subject changes
+  document.getElementById('subjectSelect').addEventListener('change', function() {
+    const subjectId      = this.value;
+    const syllabusSelect = document.getElementById('syllabusSelect');
+    const options        = syllabusSelect.querySelectorAll('option');
+
+    options.forEach(function(option) {
+      if (!option.value || option.dataset.subject === subjectId) {
+        option.style.display = '';
+      } else {
+        option.style.display = 'none';
+      }
+    });
+
+    // Reset to all topics
+    syllabusSelect.value = '';
+  });
+</script>

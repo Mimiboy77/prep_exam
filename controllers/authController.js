@@ -1,4 +1,4 @@
-const bcrypt        = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const User          = require('../models/User');
 const School        = require('../models/School');
 const { generateUsername } = require('../utils/helpers');
@@ -65,16 +65,16 @@ const postRegister = async (req, res) => {
   try {
     const { surname, firstname, studentClass, department, schoolId } = req.body;
 
-    // Generate username from surname, class and department
-    const username = generateUsername(surname, studentClass, department);
+    // Generate username
+    const username = await generateUsername(firstname, surname, studentClass);
 
-    // Default password is the student's surname (lowercased)
+    // Default password is surname lowercased
     const defaultPassword = surname.toLowerCase();
 
-    // Hash the default password
+    // Hash the password
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-    // Create new student user
+    // Create new student
     const newStudent = new User({
       surname,
       firstname,
@@ -88,9 +88,15 @@ const postRegister = async (req, res) => {
 
     await newStudent.save();
 
-    // Flash success with generated username so student knows their login
-    req.flash('success_msg', `Registration successful! Your username is: ${username} and your default password is your surname.`);
-    res.redirect('/auth/login');
+    // Store account details in session temporarily
+    // So the account details page can display them
+    req.session.newAccount = {
+      newUsername: username,
+      newPassword: defaultPassword
+    };
+
+    // Redirect to account details page
+    res.redirect('/auth/account-details');
 
   } catch (error) {
     console.error('Registration error:', error.message);
@@ -106,5 +112,25 @@ const logout = (req, res) => {
     res.redirect('/auth/login');
   });
 };
+// --- Render Account Details Page ---
+const getAccountDetails = (req, res) => {
+  // Get username and password from session temp store
+  const { newUsername, newPassword } = req.session.newAccount || {};
 
-module.exports = { getLogin, postLogin, getRegister, postRegister, logout };
+  // If no account details in session redirect to register
+  if (!newUsername) {
+    req.flash('error_msg', 'No account details found. Please register.');
+    return res.redirect('/auth/register');
+  }
+
+  // Clear the temp account details from session after reading
+  delete req.session.newAccount;
+
+  res.render('auth/account-details', {
+    title:       'Your Account Details',
+    newUsername,
+    newPassword
+  });
+};
+
+module.exports = { getLogin, postLogin, getRegister, postRegister, getAccountDetails, logout };

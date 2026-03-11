@@ -4,13 +4,13 @@
       <div class="card-body p-4">
         <h3 class="mb-4">Add Question</h3>
 
-        <form action="/teacher/questions/add" method="POST">
+        <form action="/teacher/questions/add" method="POST" enctype="multipart/form-data">
 
           <div class="mb-3">
             <label class="form-label">Subject</label>
             <select name="subjectId" class="form-select" id="subjectSelect" required>
               <option value="">-- Select Subject --</option>
-              <% subjects.forEach(subject => { %>
+              <% subjects.forEach(function(subject) { %>
                 <option value="<%= subject._id %>"><%= subject.name %></option>
               <% }) %>
             </select>
@@ -20,7 +20,7 @@
             <label class="form-label">Syllabus Topic</label>
             <select name="syllabusId" class="form-select" id="syllabusSelect" required>
               <option value="">-- Select Topic --</option>
-              <% syllabus.forEach(item => { %>
+              <% syllabus.forEach(function(item) { %>
                 <option value="<%= item._id %>"><%= item.topic %></option>
               <% }) %>
             </select>
@@ -29,6 +29,14 @@
           <div class="mb-3">
             <label class="form-label">Question Text</label>
             <textarea name="questionText" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <!-- Optional Image Upload -->
+          <div class="mb-3">
+            <label class="form-label">Question Image <span class="text-muted">(optional)</span></label>
+            <input type="file" name="image" class="form-control" accept="image/*"
+              onchange="previewImage(this)" />
+            <div class="mt-2" id="imagePreview"></div>
           </div>
 
           <div class="mb-3">
@@ -51,14 +59,20 @@
             <input type="text" name="options" class="form-control" required />
           </div>
 
+          <!-- Answer selected by option letter -->
           <div class="mb-3">
             <label class="form-label">Correct Answer</label>
-            <input type="text" name="answer" class="form-control"
-              placeholder="Must match one of the options exactly" required />
+            <select name="answerIndex" class="form-select" required>
+              <option value="">-- Select Correct Option --</option>
+              <option value="0">Option A is correct</option>
+              <option value="1">Option B is correct</option>
+              <option value="2">Option C is correct</option>
+              <option value="3">Option D is correct</option>
+            </select>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Explanation (optional)</label>
+            <label class="form-label">Explanation <span class="text-muted">(optional)</span></label>
             <textarea name="explanation" class="form-control" rows="2"></textarea>
           </div>
 
@@ -71,27 +85,35 @@
   </div>
 </div>
 
-<!-- Auto load syllabus when subject changes -->
 <script>
-  document.getElementById('subjectSelect').addEventListener('change', async function () {
-    const subjectId = this.value;
+  // --- Load Syllabus when Subject changes ---
+  document.getElementById('subjectSelect').addEventListener('change', async function() {
+    const subjectId      = this.value;
     const syllabusSelect = document.getElementById('syllabusSelect');
-
-    // Clear current options
     syllabusSelect.innerHTML = '<option value="">-- Select Topic --</option>';
-
     if (!subjectId) return;
 
-    // Fetch syllabus for selected subject
-    const res  = await fetch(`/teacher/syllabus/${subjectId}`);
+    const res  = await fetch('/teacher/syllabus/' + subjectId);
     const data = await res.json();
-
-    // Populate syllabus dropdown
-    data.forEach(item => {
-      const option = document.createElement('option');
+    data.forEach(function(item) {
+      const option       = document.createElement('option');
       option.value       = item._id;
       option.textContent = item.topic;
       syllabusSelect.appendChild(option);
     });
   });
+
+  // --- Preview image before upload ---
+  function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.innerHTML =
+          '<img src="' + e.target.result + '" class="img-thumbnail mt-2" style="max-width:300px;" />';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
 </script>

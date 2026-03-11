@@ -7,6 +7,9 @@ const QuestionSchema = new mongoose.Schema({
   teacherId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User',     required: true },
   questionText: { type: String, required: true, trim: true },
 
+  // Optional image for questions that need diagrams
+  image:        { type: String, default: null },
+
   // Array of 4 options e.g ['Paris', 'London', 'Rome', 'Berlin']
   options:      [{ type: String, required: true, trim: true }],
 

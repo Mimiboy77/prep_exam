@@ -1,18 +1,15 @@
-const User         = require('../models/User');
-const Subject      = require('../models/Subject');
-const Syllabus     = require('../models/Syllabus');
-const Question     = require('../models/Question');
+const User             = require('../models/User');
+const Subject          = require('../models/Subject');
+const Syllabus         = require('../models/Syllabus');
+const Question         = require('../models/Question');
 const { checkDuplicate } = require('./questionController');
+const { upload, cloudinary } = require('../config/cloudinary');
 
 // --- Teacher Dashboard ---
 const getDashboard = async (req, res) => {
   try {
     const teacherId = req.session.user.id;
-
-    // Get teacher with assigned subjects
-    const teacher = await User.findById(teacherId).populate('assignedSubjects');
-
-    // Count questions this teacher has set
+    const teacher   = await User.findById(teacherId).populate('assignedSubjects');
     const questionCount = await Question.countDocuments({ teacherId });
 
     res.render('teacher/dashboard', {
@@ -31,8 +28,6 @@ const getDashboard = async (req, res) => {
 const getQuestions = async (req, res) => {
   try {
     const teacherId = req.session.user.id;
-
-    // Only load questions set by this teacher
     const questions = await Question.find({ teacherId })
       .populate('subjectId')
       .populate('syllabusId')
@@ -50,21 +45,13 @@ const getQuestions = async (req, res) => {
 const getAddQuestion = async (req, res) => {
   try {
     const teacherId = req.session.user.id;
-
-    // Only load subjects assigned to this teacher
-    const teacher  = await User.findById(teacherId).populate('assignedSubjects');
-    const subjects = teacher.assignedSubjects;
-
-    // Load syllabus for the first subject by default
-    const syllabus = subjects.length > 0
+    const teacher   = await User.findById(teacherId).populate('assignedSubjects');
+    const subjects  = teacher.assignedSubjects;
+    const syllabus  = subjects.length > 0
       ? await Syllabus.find({ subjectId: subjects[0]._id })
       : [];
 
-    res.render('teacher/questions/add', {
-      title: 'Add Question',
-      subjects,
-      syllabus
-    });
+    res.render('teacher/questions/add', { title: 'Add Question', subjects, syllabus });
   } catch (error) {
     console.error('Get add question error:', error.message);
     req.flash('error_msg', 'Could not load form.');
@@ -73,28 +60,34 @@ const getAddQuestion = async (req, res) => {
 };
 
 // --- Handle Add Question Form Submission ---
-const postAddQuestion = async (req, res) => {
+// upload.single('image') handles optional image upload
+const postAddQuestion = [upload.single('image'), async (req, res) => {
   try {
     const teacherId = req.session.user.id;
-    const { subjectId, syllabusId, questionText, options, answer, explanation } = req.body;
+    const { subjectId, syllabusId, questionText, options, answerIndex, explanation } = req.body;
+
+    // options is an array of 4 strings
+    const optionsArray = Array.isArray(options) ? options : [options];
+
+    // answerIndex is 0,1,2,3 — use it to get the correct answer text
+    const answer = optionsArray[parseInt(answerIndex)];
 
     // Run duplicate check before saving
     const { isDuplicate, message } = await checkDuplicate(questionText, subjectId, syllabusId);
-
-    // If duplicate found, alert teacher and stop
     if (isDuplicate) {
       req.flash('error_msg', message);
       return res.redirect('/teacher/questions/add');
     }
 
-    // options come as array from form (option1, option2, option3, option4)
-    const optionsArray = Array.isArray(options) ? options : [options];
+    // Get image URL from Cloudinary if uploaded
+    const image = req.file ? req.file.path : null;
 
     await Question.create({
       subjectId,
       syllabusId,
       teacherId,
       questionText,
+      image,
       options: optionsArray,
       answer,
       explanation
@@ -107,15 +100,13 @@ const postAddQuestion = async (req, res) => {
     req.flash('error_msg', 'Could not add question.');
     res.redirect('/teacher/questions/add');
   }
-};
+}];
 
 // --- Render Edit Question Form ---
 const getEditQuestion = async (req, res) => {
   try {
     const teacherId = req.session.user.id;
-
-    // Make sure teacher can only edit their own question
-    const question = await Question.findOne({ _id: req.params.id, teacherId })
+    const question  = await Question.findOne({ _id: req.params.id, teacherId })
       .populate('subjectId')
       .populate('syllabusId');
 
@@ -124,7 +115,6 @@ const getEditQuestion = async (req, res) => {
       return res.redirect('/teacher/questions');
     }
 
-    // Load teacher's assigned subjects and syllabus
     const teacher  = await User.findById(teacherId).populate('assignedSubjects');
     const subjects = teacher.assignedSubjects;
     const syllabus = await Syllabus.find({ subjectId: question.subjectId._id });
@@ -143,12 +133,11 @@ const getEditQuestion = async (req, res) => {
 };
 
 // --- Handle Edit Question Form Submission ---
-const postEditQuestion = async (req, res) => {
+const postEditQuestion = [upload.single('image'), async (req, res) => {
   try {
     const teacherId = req.session.user.id;
-    const { subjectId, syllabusId, questionText, options, answer, explanation } = req.body;
+    const { subjectId, syllabusId, questionText, options, answerIndex, explanation } = req.body;
 
-    // Make sure teacher owns this question
     const question = await Question.findOne({ _id: req.params.id, teacherId });
     if (!question) {
       req.flash('error_msg', 'Question not found or access denied.');
@@ -159,18 +148,30 @@ const postEditQuestion = async (req, res) => {
     const { isDuplicate, message } = await checkDuplicate(
       questionText, subjectId, syllabusId, req.params.id
     );
-
     if (isDuplicate) {
       req.flash('error_msg', message);
       return res.redirect(`/teacher/questions/edit/${req.params.id}`);
     }
 
     const optionsArray = Array.isArray(options) ? options : [options];
+    const answer       = optionsArray[parseInt(answerIndex)];
+
+    // If new image uploaded delete old one from Cloudinary first
+    let image = question.image;
+    if (req.file) {
+      // Delete old image from Cloudinary if it exists
+      if (question.image) {
+        const publicId = question.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(`exam-prep-questions/${publicId}`);
+      }
+      image = req.file.path;
+    }
 
     await Question.findByIdAndUpdate(req.params.id, {
       subjectId,
       syllabusId,
       questionText,
+      image,
       options: optionsArray,
       answer,
       explanation
@@ -183,7 +184,7 @@ const postEditQuestion = async (req, res) => {
     req.flash('error_msg', 'Could not update question.');
     res.redirect('/teacher/questions');
   }
-};
+}];
 
 module.exports = {
   getDashboard,

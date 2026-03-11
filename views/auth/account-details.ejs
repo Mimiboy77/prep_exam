@@ -1,0 +1,79 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow mt-5 border-success">
+      <div class="card-header bg-success text-white text-center">
+        <h4 class="mb-0">🎉 Registration Successful!</h4>
+      </div>
+      <div class="card-body p-4">
+
+        <p class="text-center text-muted mb-4">
+          Your account has been created. Please save your login details below
+          before proceeding.
+        </p>
+
+        <!-- Username -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">Your Username</label>
+          <div class="input-group">
+            <input type="text" class="form-control form-control-lg"
+              id="usernameField" value="<%= newUsername %>" readonly />
+            <button class="btn btn-outline-secondary" type="button"
+              onclick="copyToClipboard('usernameField', 'usernameCopied')">
+              Copy
+            </button>
+          </div>
+          <small class="text-success d-none" id="usernameCopied">
+            ✓ Username copied!
+          </small>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">Your Default Password</label>
+          <div class="input-group">
+            <input type="text" class="form-control form-control-lg"
+              id="passwordField" value="<%= newPassword %>" readonly />
+            <button class="btn btn-outline-secondary" type="button"
+              onclick="copyToClipboard('passwordField', 'passwordCopied')">
+              Copy
+            </button>
+          </div>
+          <small class="text-success d-none" id="passwordCopied">
+            ✓ Password copied!
+          </small>
+          <small class="text-muted d-block mt-1">
+            Your default password is your surname in lowercase.
+            You can change it after logging in.
+          </small>
+        </div>
+
+        <!-- Warning -->
+        <div class="alert alert-warning text-center">
+          ⚠️ Please write down or copy your username before proceeding.
+          You will need it to log in.
+        </div>
+
+        <!-- Proceed button -->
+        <a href="/auth/login" class="btn btn-success btn-lg w-100">
+          I have saved my details — Proceed to Login
+        </a>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Copy text to clipboard and show confirmation
+  function copyToClipboard(fieldId, confirmId) {
+    var field = document.getElementById(fieldId);
+    navigator.clipboard.writeText(field.value).then(function() {
+      var confirm = document.getElementById(confirmId);
+      confirm.classList.remove('d-none');
+      // Hide after 3 seconds
+      setTimeout(function() {
+        confirm.classList.add('d-none');
+      }, 3000);
+    });
+  }
+</script>

@@ -100,11 +100,13 @@ const startExam = async (req, res) => {
     });
 
     res.render('student/exam/take', {
-      title: 'Take Exam',
-      exam,
-      questions,
-      studentExamId: studentExam._id
-    });
+  title:      'Take Exam',
+  exam,
+  questions,
+  studentExamId: studentExam._id,
+  layout:        false  // disable main layout for fullscreen exam
+});
+
   } catch (error) {
     console.error('Start exam error:', error.message);
     req.flash('error_msg', 'Could not start exam.');
@@ -125,7 +127,7 @@ const getConfirmSubmit = async (req, res) => {
 // --- Submit Exam ---
 const submitExam = async (req, res) => {
   try {
-    const { studentExamId, answers } = req.body;
+    const { studentExamId, answersJson } = req.body;
 
     // Load the StudentExam record
     const studentExam = await StudentExam.findById(studentExamId);
@@ -134,7 +136,7 @@ const submitExam = async (req, res) => {
       return res.redirect('/student/exams');
     }
 
-    // Load exam with questions to calculate score
+    // Load exam with questions
     const result = await getExamWithQuestions(studentExam.examId);
     if (!result) {
       req.flash('error_msg', 'Could not load exam for scoring.');
@@ -143,17 +145,22 @@ const submitExam = async (req, res) => {
 
     const { questions } = result;
 
-    // Parse answers from form
-    // answers comes as { questionId: selectedOption }
-    const parsedAnswers = Object.keys(answers || {}).map(questionId => ({
-      questionId,
-      selectedOption: answers[questionId]
-    }));
+    // Parse the JSON string of answers
+    var parsedAnswers = [];
+    if (answersJson && answersJson !== '{}' && answersJson !== '') {
+      var answersObj = JSON.parse(answersJson);
+      Object.keys(answersObj).forEach(function(questionId) {
+        var selectedOption = answersObj[questionId];
+        if (selectedOption && selectedOption !== '') {
+          parsedAnswers.push({ questionId, selectedOption });
+        }
+      });
+    }
 
     // Calculate score
     const score = calculateScore(parsedAnswers, questions);
 
-    // Update StudentExam with answers, score and completed status
+    // Save to database
     await StudentExam.findByIdAndUpdate(studentExamId, {
       answers:   parsedAnswers,
       score,
@@ -161,14 +168,15 @@ const submitExam = async (req, res) => {
       dateTaken: new Date()
     });
 
-    req.flash('success_msg', `Exam submitted! Your score is ${score}%`);
-    res.redirect(`/student/results/${studentExamId}`);
+    req.flash('success_msg', 'Exam submitted! Your score is ' + score + '%');
+    res.redirect('/student/results/' + studentExamId);
   } catch (error) {
     console.error('Submit exam error:', error.message);
     req.flash('error_msg', 'Could not submit exam.');
     res.redirect('/student/exams');
   }
 };
+
 // --- Get All Results ---
 const getResults = async (req, res) => {
   try {
@@ -269,6 +277,62 @@ const getProgress = async (req, res) => {
     res.redirect('/student/dashboard');
   }
 };
+// --- Get Student Profile ---
+const getProfile = async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    const student   = await User.findById(studentId).populate('schoolId');
+    const schools   = await require('../models/School').find().sort({ name: 1 });
+
+    res.render('student/profile', { title: 'My Profile', student, schools });
+  } catch (error) {
+    console.error('Get profile error:', error.message);
+    req.flash('error_msg', 'Could not load profile.');
+    res.redirect('/student/dashboard');
+  }
+};
+
+// --- Update Student Profile ---
+const postProfile = async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    const { surname, firstname, studentClass, department, schoolId } = req.body;
+
+    const student = await User.findById(studentId);
+
+    // Check if surname changed — if so update password too
+    let updateData = {
+      surname,
+      firstname,
+      class:      studentClass,
+      department,
+      schoolId
+    };
+
+    if (surname.toLowerCase() !== student.surname.toLowerCase()) {
+      // Surname changed — reset password to new surname
+      const bcrypt         = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash(surname.toLowerCase(), 10);
+      updateData.password  = hashedPassword;
+      req.flash('success_msg',
+        `Profile updated. Your new password is your new surname: ${surname.toLowerCase()}`
+      );
+    } else {
+      req.flash('success_msg', 'Profile updated successfully.');
+    }
+
+    await User.findByIdAndUpdate(studentId, updateData);
+
+    // Update session with new surname
+    req.session.user.surname = surname;
+
+    res.redirect('/student/profile');
+  } catch (error) {
+    console.error('Update profile error:', error.message);
+    req.flash('error_msg', 'Could not update profile.');
+    res.redirect('/student/profile');
+  }
+};
 module.exports = {
   getDashboard,
   getAvailableExams,
@@ -278,5 +342,7 @@ module.exports = {
   submitExam,
   getResults,
   viewResult,
-  getProgress
+  getProgress,
+  getProfile,
+  postProfile
 };

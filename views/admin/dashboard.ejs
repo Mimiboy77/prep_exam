@@ -53,10 +53,29 @@
   </div>
 
   <div class="col-md-4">
+    <div class="card text-white bg-info shadow">
+      <div class="card-body">
+        <h5 class="card-title">Syllabus</h5>
+        <a href="/admin/syllabus" class="btn btn-light btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
     <div class="card text-white bg-dark shadow">
       <div class="card-body">
         <h5 class="card-title">Questions</h5>
         <p class="display-6"><%= questionCount %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white shadow" style="background: #6f42c1;">
+      <div class="card-body">
+        <h5 class="card-title">Performance Report</h5>
+        <p class="small">Download Excel report filtered by school, subject, class or date.</p>
+        <a href="/admin/report" class="btn btn-light btn-sm">Generate Report</a>
       </div>
     </div>
   </div>

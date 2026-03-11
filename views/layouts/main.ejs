@@ -9,37 +9,116 @@
 </head>
 <body>
 
-  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <a class="navbar-brand" href="/">Exam Prep App</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+      <!-- Brand -->
+      <a class="navbar-brand fw-bold" href="/">Exam Prep</a>
+
+      <!-- Mobile toggle button -->
+      <button class="navbar-toggler" type="button"
+        data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+
+          <!-- ========== ADMIN NAV ========== -->
           <% if (user && user.role === 'admin') { %>
-            <li class="nav-item"><a class="nav-link" href="/admin/dashboard">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin/teachers">Teachers</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin/subjects">Subjects</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin/exams">Exams</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin/students">Students</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin/schools">Schools</a></li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+            </li>
+
+            <!-- Manage dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#"
+                data-bs-toggle="dropdown">Manage</a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><a class="dropdown-item" href="/admin/schools">🏫 Schools</a></li>
+                <li><a class="dropdown-item" href="/admin/teachers">👨‍🏫 Teachers</a></li>
+                <li><a class="dropdown-item" href="/admin/students">👨‍🎓 Students</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/admin/subjects">📚 Subjects</a></li>
+                <li><a class="dropdown-item" href="/admin/syllabus">📋 Syllabus</a></li>
+              </ul>
+            </li>
+
+            <!-- Exams dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#"
+                data-bs-toggle="dropdown">Exams</a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><a class="dropdown-item" href="/admin/exams">📝 All Exams</a></li>
+                <li><a class="dropdown-item" href="/admin/exams/create">➕ Create Exam</a></li>
+              </ul>
+            </li>
+
+            <!-- Reports -->
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/report">📊 Reports</a>
+            </li>
+
+          <!-- ========== TEACHER NAV ========== -->
           <% } else if (user && user.role === 'teacher') { %>
-            <li class="nav-item"><a class="nav-link" href="/teacher/dashboard">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/teacher/questions">Questions</a></li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/teacher/dashboard">Dashboard</a>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#"
+                data-bs-toggle="dropdown">Questions</a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><a class="dropdown-item" href="/teacher/questions">📋 My Questions</a></li>
+                <li><a class="dropdown-item" href="/teacher/questions/add">➕ Add Question</a></li>
+              </ul>
+            </li>
+
+          <!-- ========== STUDENT NAV ========== -->
           <% } else if (user && user.role === 'student') { %>
-            <li class="nav-item"><a class="nav-link" href="/student/dashboard">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/student/exams">Exams</a></li>
-            <li class="nav-item"><a class="nav-link" href="/student/results">Results</a></li>
-            <li class="nav-item"><a class="nav-link" href="/student/progress">Progress</a></li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/student/dashboard">Dashboard</a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/student/exams">📝 Exams</a>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#"
+                data-bs-toggle="dropdown">Results</a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><a class="dropdown-item" href="/student/results">📄 My Results</a></li>
+                <li><a class="dropdown-item" href="/student/progress">📈 My Progress</a></li>
+              </ul>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/student/profile">👤 Profile</a>
+            </li>
+
+          <!-- ========== GUEST NAV ========== -->
           <% } else { %>
-            <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
-            <li class="nav-item"><a class="nav-link" href="/auth/register">Register</a></li>
+
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/register">Register</a>
+            </li>
+
           <% } %>
+
+          <!-- ========== LOGOUT ========== -->
           <% if (user) { %>
-            <li class="nav-item"><a class="nav-link text-danger" href="/auth/logout">Logout</a></li>
+            <li class="nav-item ms-lg-2">
+              <a class="btn btn-outline-danger btn-sm" href="/auth/logout">Logout</a>
+            </li>
           <% } %>
+
         </ul>
       </div>
     </div>
@@ -48,10 +127,16 @@
   <!-- Flash Messages -->
   <div class="container mt-3">
     <% if (success_msg && success_msg.length > 0) { %>
-      <div class="alert alert-success"><%= success_msg %></div>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>✅</strong> <%= success_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     <% } %>
     <% if (error_msg && error_msg.length > 0) { %>
-      <div class="alert alert-danger"><%= error_msg %></div>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>❌</strong> <%= error_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     <% } %>
   </div>
 
