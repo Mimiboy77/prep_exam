@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Exam — <%= exam.subjectId.name %></title>
+  <title>Exam — <%= subjectSettings.subjectId.name %></title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
   <style>
     body { background: #f0f2f5; margin: 0; padding: 0; }
@@ -139,7 +139,7 @@
 
 <!-- Fixed Exam Header -->
 <div class="exam-header">
-  <div class="fw-bold fs-6"><%= exam.subjectId.name %> Exam</div>
+  <div class="fw-bold fs-6"><%= exam.examType %> — <%= subjectSettings.subjectId.name %></div>
   <div class="d-flex align-items-center gap-3">
     <div class="timer-box" id="timerBox">
       ⏱ <span id="timer"></span>
@@ -264,25 +264,21 @@
 </div>
 
 <script>
-  var currentIndex = 0;
-  var total        = <%= questions.length %>;
-  var answers      = {};
-  var isSubmitting = false;
+  var currentIndex  = 0;
+  var total         = <%= questions.length %>;
+  var answers       = {};
+  var isSubmitting  = false;
   var examSubmitted = false;
 
   // --- SUBMIT EXAM ---
   function submitExam() {
-    if (examSubmitted) return; // prevent double submit
+    if (examSubmitted) return;
     examSubmitted = true;
     isSubmitting  = true;
 
-    // Stop the timer
     clearInterval(countdown);
 
-    // Save all answers to hidden field
     document.getElementById('answersJson').value = JSON.stringify(answers);
-
-    // Submit the form
     document.getElementById('examForm').submit();
   }
 
@@ -349,7 +345,7 @@
   }
 
   // --- TIMER ---
-  var timeLeft = <%= exam.timer %> * 60;
+  var timeLeft = <%= subjectSettings.timer %> * 60;
   var timerEl  = document.getElementById('timer');
   var timerBox = document.getElementById('timerBox');
 
@@ -365,17 +361,10 @@
     timeLeft--;
   }, 1000);
 
-  // --- PREVENT BACK NAVIGATION after submit ---
-  // Push a new state so back button does not return to exam
+  // --- PREVENT BACK NAVIGATION ---
   history.pushState(null, null, location.href);
   window.addEventListener('popstate', function() {
-    if (examSubmitted) {
-      // Already submitted, redirect to results
-      history.pushState(null, null, location.href);
-    } else {
-      // Not submitted, warn user
-      history.pushState(null, null, location.href);
-    }
+    history.pushState(null, null, location.href);
   });
 
   // --- WARN BEFORE LEAVING only if not submitting ---

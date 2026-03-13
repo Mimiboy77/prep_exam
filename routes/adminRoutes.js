@@ -35,11 +35,13 @@ router.post('/syllabus/add',     adminController.postAddSyllabus);
 router.get('/syllabus/edit/:id', adminController.getEditSyllabus);
 router.post('/syllabus/edit/:id',adminController.postEditSyllabus);
 // --- Exams ---
-router.get('/exams',               adminController.getExams);
-router.get('/exams/create',        adminController.getCreateExam);
-router.post('/exams/create',       adminController.postCreateExam);
-router.get('/exams/settings/:id',  adminController.getExamSettings);
-router.post('/exams/settings/:id', adminController.postExamSettings);
+router.get('/exams',                        adminController.getExams);
+router.get('/exams/create',                 adminController.getCreateExam);
+router.post('/exams/create',                adminController.postCreateExam);
+router.get('/exams/settings/:id',           adminController.getExamSettings);
+router.post('/exams/settings/:id',          adminController.postExamSettings);
+router.post('/exams/toggle-visibility/:id', adminController.toggleExamVisibility);
+router.post('/exams/delete/:id',            adminController.deleteExam);
 
 // --- Students ---
 router.get('/students',          adminController.getStudents);

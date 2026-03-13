@@ -1,46 +1,48 @@
 <div class="row justify-content-center">
   <div class="col-md-7">
     <div class="card shadow">
+      <div class="card-header text-white fw-bold" style="background: #2c3e50;">
+        Exam Instructions — <%= exam.examType %>
+      </div>
       <div class="card-body p-4">
 
-        <h3 class="mb-4 text-center">Exam Instructions</h3>
-
-        <!-- Exam Info -->
         <table class="table table-bordered mb-4">
           <tr>
+            <th>Exam Type</th>
+            <td><%= exam.examType %></td>
+          </tr>
+          <tr>
             <th>Subject</th>
-            <td><%= exam.subjectId.name %></td>
+            <td><%= subjectSettings.subjectId.name %></td>
           </tr>
           <tr>
             <th>Number of Questions</th>
-            <td><%= exam.questionCount %></td>
+            <td><%= subjectSettings.questionCount %></td>
           </tr>
           <tr>
             <th>Time Allowed</th>
-            <td><%= exam.timer %> minutes</td>
+            <td><%= subjectSettings.timer %> minutes</td>
           </tr>
           <tr>
             <th>Retake Policy</th>
-            <td><%= exam.retakePolicy %></td>
+            <td><%= subjectSettings.retakePolicy %></td>
           </tr>
           <tr>
             <th>Randomized</th>
-            <td><%= exam.randomize ? 'Yes' : 'No' %></td>
+            <td><%= subjectSettings.randomize ? 'Yes' : 'No' %></td>
           </tr>
         </table>
 
-        <!-- Instructions -->
         <h5>Please read carefully:</h5>
         <ul class="mb-4">
-          <li>Once you click <strong>Proceed to Test</strong>, the timer will start immediately.</li>
+          <li>Once you click <strong>Proceed to Test</strong>, the timer starts immediately.</li>
           <li>Do not refresh or close the page during the exam.</li>
           <li>Answer all questions before submitting.</li>
           <li>The exam will auto-submit when the timer runs out.</li>
-          <li>You can only go back if your retake policy allows it.</li>
         </ul>
 
-        <!-- Proceed Button -->
-        <a href="/student/exams/start/<%= exam._id %>" class="btn btn-success w-100 btn-lg">
+        <a href="/student/exams/start/<%= exam._id %>/<%= subjectId %>"
+          class="btn btn-success w-100 btn-lg">
           Proceed to Test
         </a>
         <a href="/student/exams" class="btn btn-secondary w-100 mt-2">Go Back</a>

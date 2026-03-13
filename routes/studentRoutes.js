@@ -11,11 +11,10 @@ router.use(isLoggedIn, isStudent);
 router.get('/dashboard', studentController.getDashboard);
 
 // --- Exams ---
-router.get('/exams',                        studentController.getAvailableExams);
-router.get('/exams/instruction/:examId',    studentController.getInstruction);
-router.get('/exams/start/:examId',          studentController.startExam);
-router.get('/exams/confirm-submit',         studentController.getConfirmSubmit);
-router.post('/exams/submit',                studentController.submitExam);
+router.get('/exams',                                      studentController.getAvailableExams);
+router.get('/exams/instruction/:examId/:subjectId',       studentController.getInstruction);
+router.get('/exams/start/:examId/:subjectId',             studentController.startExam);
+router.post('/exams/submit',                              studentController.submitExam);
 // --- Results ---
 router.get('/results',      studentController.getResults);
 router.get('/results/:id',  studentController.viewResult);

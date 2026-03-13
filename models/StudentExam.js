@@ -5,13 +5,16 @@ const StudentExamSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   examId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Exam', required: true },
 
+  // examKey = examId + subjectId — used to track retake policy per subject
+  examKey:   { type: String, default: '' },
+
   // Each answer stores the questionId and the option the student picked
   answers: [{
-    questionId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Question' },
+    questionId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Question' },
     selectedOption: { type: String }
   }],
 
-  score:     { type: Number, default: 0 },   // final score after submission
+  score:     { type: Number, default: 0 },
   status:    { type: String, enum: ['in-progress', 'completed'], default: 'in-progress' },
   dateTaken: { type: Date, default: Date.now }
 

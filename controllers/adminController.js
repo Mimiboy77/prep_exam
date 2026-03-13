@@ -1,15 +1,14 @@
-const bcrypt = require('bcryptjs');
-const User     = require('../models/User');
-const School   = require('../models/School');
-const Subject  = require('../models/Subject');
-const Syllabus = require('../models/Syllabus');
-const Exam     = require('../models/Exam');
+const bcrypt      = require('bcryptjs');
+const User        = require('../models/User');
+const School      = require('../models/School');
+const Subject     = require('../models/Subject');
+const Syllabus    = require('../models/Syllabus');
+const Exam        = require('../models/Exam');
 const StudentExam = require('../models/StudentExam');
 
 // --- Admin Dashboard ---
 const getDashboard = async (req, res) => {
   try {
-    // Count all entities for dashboard overview
     const teacherCount  = await User.countDocuments({ role: 'teacher' });
     const studentCount  = await User.countDocuments({ role: 'student' });
     const subjectCount  = await Subject.countDocuments();
@@ -54,14 +53,11 @@ const getAddSchool = (req, res) => {
 const postAddSchool = async (req, res) => {
   try {
     const { name, location } = req.body;
-
-    // Check if school already exists
     const existing = await School.findOne({ name });
     if (existing) {
       req.flash('error_msg', 'School already exists.');
       return res.redirect('/admin/schools/add');
     }
-
     await School.create({ name, location });
     req.flash('success_msg', 'School added successfully.');
     res.redirect('/admin/schools');
@@ -75,11 +71,9 @@ const postAddSchool = async (req, res) => {
 // --- Get All Teachers ---
 const getTeachers = async (req, res) => {
   try {
-    // Populate assignedSubjects so we can show subject names
     const teachers = await User.find({ role: 'teacher' })
       .populate('assignedSubjects')
       .sort({ createdAt: -1 });
-
     res.render('admin/teachers/index', { title: 'Teachers', teachers });
   } catch (error) {
     console.error('Get teachers error:', error.message);
@@ -104,31 +98,21 @@ const getAddTeacher = async (req, res) => {
 const postAddTeacher = async (req, res) => {
   try {
     const { surname, firstname, username, password, assignedSubjects } = req.body;
-
-    // Check if username already exists
     const existing = await User.findOne({ username });
     if (existing) {
       req.flash('error_msg', 'Username already taken.');
       return res.redirect('/admin/teachers/add');
     }
-
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // assignedSubjects can be a single value or array, normalize to array
     const subjects = Array.isArray(assignedSubjects)
       ? assignedSubjects
       : assignedSubjects ? [assignedSubjects] : [];
-
     await User.create({
-      surname,
-      firstname,
-      username,
+      surname, firstname, username,
       password: hashedPassword,
-      role:     'teacher',
+      role: 'teacher',
       assignedSubjects: subjects
     });
-
     req.flash('success_msg', 'Teacher added successfully.');
     res.redirect('/admin/teachers');
   } catch (error) {
@@ -143,7 +127,6 @@ const getAssignTeacher = async (req, res) => {
   try {
     const teacher  = await User.findById(req.params.id).populate('assignedSubjects');
     const subjects = await Subject.find().sort({ name: 1 });
-
     res.render('admin/teachers/assign', { title: 'Assign Subject', teacher, subjects });
   } catch (error) {
     console.error('Get assign teacher form error:', error.message);
@@ -156,15 +139,10 @@ const getAssignTeacher = async (req, res) => {
 const postAssignTeacher = async (req, res) => {
   try {
     const { assignedSubjects } = req.body;
-
-    // Normalize to array
     const subjects = Array.isArray(assignedSubjects)
       ? assignedSubjects
       : assignedSubjects ? [assignedSubjects] : [];
-
-    // Update teacher's assigned subjects
     await User.findByIdAndUpdate(req.params.id, { assignedSubjects: subjects });
-
     req.flash('success_msg', 'Teacher subjects updated successfully.');
     res.redirect('/admin/teachers');
   } catch (error) {
@@ -173,6 +151,7 @@ const postAssignTeacher = async (req, res) => {
     res.redirect('/admin/teachers');
   }
 };
+
 // --- Get All Subjects ---
 const getSubjects = async (req, res) => {
   try {
@@ -194,14 +173,11 @@ const getAddSubject = (req, res) => {
 const postAddSubject = async (req, res) => {
   try {
     const { name, description } = req.body;
-
-    // Check if subject already exists
     const existing = await Subject.findOne({ name });
     if (existing) {
       req.flash('error_msg', 'Subject already exists.');
       return res.redirect('/admin/subjects/add');
     }
-
     await Subject.create({ name, description });
     req.flash('success_msg', 'Subject added successfully.');
     res.redirect('/admin/subjects');
@@ -238,20 +214,14 @@ const postEditSubject = async (req, res) => {
   }
 };
 
-// --- Get Syllabus by Subject ---
+// --- Get Syllabus ---
 const getSyllabus = async (req, res) => {
   try {
-    // Load all subjects for the filter dropdown
     const subjects = await Subject.find().sort({ name: 1 });
-
-    // If a subjectId is passed in query, filter by it
-    const filter = req.query.subjectId ? { subjectId: req.query.subjectId } : {};
+    const filter   = req.query.subjectId ? { subjectId: req.query.subjectId } : {};
     const syllabus = await Syllabus.find(filter).populate('subjectId').sort({ createdAt: -1 });
-
     res.render('admin/syllabus/index', {
-      title:           'Syllabus',
-      syllabus,
-      subjects,
+      title: 'Syllabus', syllabus, subjects,
       selectedSubject: req.query.subjectId || ''
     });
   } catch (error) {
@@ -277,14 +247,11 @@ const getAddSyllabus = async (req, res) => {
 const postAddSyllabus = async (req, res) => {
   try {
     const { subjectId, topic, description } = req.body;
-
-    // Check if topic already exists under this subject
     const existing = await Syllabus.findOne({ subjectId, topic });
     if (existing) {
       req.flash('error_msg', 'This topic already exists for this subject.');
       return res.redirect('/admin/syllabus/add');
     }
-
     await Syllabus.create({ subjectId, topic, description });
     req.flash('success_msg', 'Syllabus topic added successfully.');
     res.redirect('/admin/syllabus');
@@ -321,11 +288,12 @@ const postEditSyllabus = async (req, res) => {
     res.redirect('/admin/syllabus');
   }
 };
+
 // --- Get All Exams ---
 const getExams = async (req, res) => {
   try {
     const exams = await Exam.find()
-      .populate('subjectId')
+      .populate('subjects.subjectId')
       .populate('adminId')
       .sort({ createdAt: -1 });
     res.render('admin/exams/index', { title: 'Exams', exams });
@@ -352,36 +320,82 @@ const getCreateExam = async (req, res) => {
 // --- Handle Create Exam Form Submission ---
 const postCreateExam = async (req, res) => {
   try {
-    const { subjectId, syllabusId, questionCount, timer, randomize, retakePolicy } = req.body;
     const Question = require('../models/Question');
+    const {
+      examType, customExamName,
+      subjectIds, syllabusIds,
+      questionCounts, timers,
+      randomizes, retakePolicies,
+      isLocked, isVisible
+    } = req.body;
 
-    // Build filter — if syllabusId provided filter by it, otherwise just subject
-    const filter = syllabusId ? { subjectId, syllabusId } : { subjectId };
+    // Use custom name if examType is 'custom'
+    const finalExamType = examType === 'custom' ? customExamName : examType;
 
-    // Pull questions from pool
-    let questions = await Question.find(filter);
-
-    // Check if enough questions exist
-    if (questions.length < questionCount) {
-      req.flash('error_msg', `Not enough questions. Only ${questions.length} available.`);
+    if (!finalExamType || finalExamType.trim() === '') {
+      req.flash('error_msg', 'Please provide an exam type or custom name.');
       return res.redirect('/admin/exams/create');
     }
 
-    // Always shuffle questions randomly
-    questions = questions.sort(() => Math.random() - 0.5);
+    // Normalize all subject fields to arrays
+    const subjectIdsArr     = Array.isArray(subjectIds)     ? subjectIds     : [subjectIds];
+    const syllabusIdsArr    = Array.isArray(syllabusIds)    ? syllabusIds    : [syllabusIds];
+    const questionCountsArr = Array.isArray(questionCounts) ? questionCounts : [questionCounts];
+    const timersArr         = Array.isArray(timers)         ? timers         : [timers];
+    const randomizesArr     = Array.isArray(randomizes)     ? randomizes     : [randomizes];
+    const retakePoliciesArr = Array.isArray(retakePolicies) ? retakePolicies : [retakePolicies];
+    const isLockedArr       = Array.isArray(isLocked)       ? isLocked       : [isLocked];
 
-    // Pick only the required number
-    const selectedQuestions = questions.slice(0, questionCount).map(q => q._id);
+    // Build subjects array
+    const subjectsData = [];
+    for (let i = 0; i < subjectIdsArr.length; i++) {
+      const subjectId     = subjectIdsArr[i];
+      const syllabusId    = syllabusIdsArr[i] || null;
+      const questionCount = parseInt(questionCountsArr[i]);
+      const timer         = parseInt(timersArr[i]);
+      const randomize     = randomizesArr[i] === 'on';
+      const retakePolicy  = retakePoliciesArr[i];
+      const locked        = isLockedArr[i] === 'on';
+
+      if (!subjectId) continue;
+
+      // Build question filter
+      const filter = syllabusId ? { subjectId, syllabusId } : { subjectId };
+      let questions = await Question.find(filter);
+
+      if (questions.length < questionCount) {
+        req.flash('error_msg',
+          `Not enough questions for a subject. Only ${questions.length} available.`
+        );
+        return res.redirect('/admin/exams/create');
+      }
+
+      // Shuffle and pick questions
+      questions = questions.sort(() => Math.random() - 0.5);
+      const selectedQuestions = questions.slice(0, questionCount).map(q => q._id);
+
+      subjectsData.push({
+        subjectId,
+        syllabusId,
+        questions:     selectedQuestions,
+        questionCount,
+        timer,
+        randomize,
+        retakePolicy,
+        isLocked: locked
+      });
+    }
+
+    if (subjectsData.length === 0) {
+      req.flash('error_msg', 'Please add at least one subject.');
+      return res.redirect('/admin/exams/create');
+    }
 
     await Exam.create({
-      adminId:       req.session.user.id,
-      subjectId,
-      syllabusId:    syllabusId || null,
-      questions:     selectedQuestions,
-      questionCount,
-      timer,
-      randomize:     randomize === 'on',
-      retakePolicy
+      adminId:   req.session.user.id,
+      examType:  finalExamType,
+      subjects:  subjectsData,
+      isVisible: isVisible === 'on'
     });
 
     req.flash('success_msg', 'Exam created successfully.');
@@ -396,8 +410,10 @@ const postCreateExam = async (req, res) => {
 // --- Render Exam Settings Form ---
 const getExamSettings = async (req, res) => {
   try {
-    const exam     = await Exam.findById(req.params.id).populate('subjectId');
-    res.render('admin/exams/settings', { title: 'Exam Settings', exam });
+    const exam     = await Exam.findById(req.params.id).populate('subjects.subjectId');
+    const subjects = await Subject.find().sort({ name: 1 });
+    const syllabus = await Syllabus.find().populate('subjectId').sort({ topic: 1 });
+    res.render('admin/exams/settings', { title: 'Exam Settings', exam, subjects, syllabus });
   } catch (error) {
     console.error('Get exam settings error:', error.message);
     req.flash('error_msg', 'Could not load exam settings.');
@@ -408,14 +424,8 @@ const getExamSettings = async (req, res) => {
 // --- Handle Exam Settings Form Submission ---
 const postExamSettings = async (req, res) => {
   try {
-    const { timer, randomize, retakePolicy } = req.body;
-
-    await Exam.findByIdAndUpdate(req.params.id, {
-      timer,
-      randomize:    randomize === 'on',
-      retakePolicy
-    });
-
+    const { isVisible } = req.body;
+    await Exam.findByIdAndUpdate(req.params.id, { isVisible: isVisible === 'on' });
     req.flash('success_msg', 'Exam settings updated successfully.');
     res.redirect('/admin/exams');
   } catch (error) {
@@ -425,19 +435,45 @@ const postExamSettings = async (req, res) => {
   }
 };
 
+// --- Toggle Exam Visibility ---
+const toggleExamVisibility = async (req, res) => {
+  try {
+    const exam = await Exam.findById(req.params.id);
+    await Exam.findByIdAndUpdate(req.params.id, { isVisible: !exam.isVisible });
+    req.flash('success_msg',
+      `Exam is now ${!exam.isVisible ? 'visible' : 'hidden'} to students.`
+    );
+    res.redirect('/admin/exams');
+  } catch (error) {
+    console.error('Toggle visibility error:', error.message);
+    req.flash('error_msg', 'Could not update visibility.');
+    res.redirect('/admin/exams');
+  }
+};
+
+// --- Delete Exam ---
+const deleteExam = async (req, res) => {
+  try {
+    await Exam.findByIdAndDelete(req.params.id);
+    req.flash('success_msg', 'Exam deleted successfully.');
+    res.redirect('/admin/exams');
+  } catch (error) {
+    console.error('Delete exam error:', error.message);
+    req.flash('error_msg', 'Could not delete exam.');
+    res.redirect('/admin/exams');
+  }
+};
+
 // --- Get All Students ---
 const getStudents = async (req, res) => {
   try {
     const schools  = await School.find().sort({ name: 1 });
-    const filter   = req.query.schoolId ? { role: 'student', schoolId: req.query.schoolId } : { role: 'student' };
-    const students = await User.find(filter)
-      .populate('schoolId')
-      .sort({ createdAt: -1 });
-
+    const filter   = req.query.schoolId
+      ? { role: 'student', schoolId: req.query.schoolId }
+      : { role: 'student' };
+    const students = await User.find(filter).populate('schoolId').sort({ createdAt: -1 });
     res.render('admin/students/index', {
-      title:          'Students',
-      students,
-      schools,
+      title: 'Students', students, schools,
       selectedSchool: req.query.schoolId || ''
     });
   } catch (error) {
@@ -447,16 +483,13 @@ const getStudents = async (req, res) => {
   }
 };
 
-// --- View Individual Student Progress ---
+// --- View Individual Student ---
 const viewStudent = async (req, res) => {
   try {
-    const student = await User.findById(req.params.id).populate('schoolId');
-
-    // Get all exams this student has taken
+    const student      = await User.findById(req.params.id).populate('schoolId');
     const studentExams = await StudentExam.find({ studentId: req.params.id })
-      .populate({ path: 'examId', populate: { path: 'subjectId' } })
+      .populate({ path: 'examId', populate: { path: 'subjects.subjectId' } })
       .sort({ createdAt: -1 });
-
     res.render('admin/students/view', { title: 'Student Progress', student, studentExams });
   } catch (error) {
     console.error('View student error:', error.message);
@@ -465,7 +498,7 @@ const viewStudent = async (req, res) => {
   }
 };
 
-// --- Filter Students by School ---
+// --- Filter Students ---
 const filterStudents = async (req, res) => {
   try {
     const schools = await School.find().sort({ name: 1 });
@@ -476,6 +509,7 @@ const filterStudents = async (req, res) => {
     res.redirect('/admin/students');
   }
 };
+
 // --- Delete Student Exam Performance ---
 const deleteStudentExam = async (req, res) => {
   try {
@@ -488,63 +522,34 @@ const deleteStudentExam = async (req, res) => {
     res.redirect('back');
   }
 };
-// --- Render Account Details Page ---
-const getAccountDetails = (req, res) => {
-  // Get username and password from session temp store
-  const { newUsername, newPassword } = req.session.newAccount || {};
 
-  // If no account details in session redirect to register
-  if (!newUsername) {
-    req.flash('error_msg', 'No account details found. Please register.');
-    return res.redirect('/auth/register');
-  }
-
-  // Clear the temp account details from session after reading
-  delete req.session.newAccount;
-
-  res.render('auth/account-details', {
-    title:       'Your Account Details',
-    newUsername,
-    newPassword
-  });
-};
 // --- Reset Student Password ---
-// Resets password back to student's surname (default password)
 const resetStudentPassword = async (req, res) => {
   try {
     const student = await User.findById(req.params.id);
-
     if (!student) {
       req.flash('error_msg', 'Student not found.');
       return res.redirect('/admin/students');
     }
-
-    // Default password is surname lowercased
     const defaultPassword = student.surname.toLowerCase();
-
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-    // Update password in database
+    const hashedPassword  = await bcrypt.hash(defaultPassword, 10);
     await User.findByIdAndUpdate(req.params.id, { password: hashedPassword });
-
     req.flash('success_msg',
       `Password reset successfully. New password is: ${defaultPassword}`
     );
     res.redirect(`/admin/students/${req.params.id}`);
-
   } catch (error) {
     console.error('Reset password error:', error.message);
     req.flash('error_msg', 'Could not reset password.');
     res.redirect('/admin/students');
   }
 };
+
 // --- Get Edit Student Form ---
 const getEditStudent = async (req, res) => {
   try {
     const student = await User.findById(req.params.id).populate('schoolId');
     const schools = await School.find().sort({ name: 1 });
-
     res.render('admin/students/edit', { title: 'Edit Student', student, schools });
   } catch (error) {
     console.error('Get edit student error:', error.message);
@@ -557,23 +562,12 @@ const getEditStudent = async (req, res) => {
 const postEditStudent = async (req, res) => {
   try {
     const { surname, firstname, studentClass, department, schoolId } = req.body;
-
     const student = await User.findById(req.params.id);
     if (!student) {
       req.flash('error_msg', 'Student not found.');
       return res.redirect('/admin/students');
     }
-
-    // Build update data
-    let updateData = {
-      surname,
-      firstname,
-      class:      studentClass,
-      department,
-      schoolId
-    };
-
-    // If surname changed reset password to new surname
+    let updateData = { surname, firstname, class: studentClass, department, schoolId };
     if (surname.toLowerCase() !== student.surname.toLowerCase()) {
       const hashedPassword = await bcrypt.hash(surname.toLowerCase(), 10);
       updateData.password  = hashedPassword;
@@ -583,7 +577,6 @@ const postEditStudent = async (req, res) => {
     } else {
       req.flash('success_msg', 'Student profile updated successfully.');
     }
-
     await User.findByIdAndUpdate(req.params.id, updateData);
     res.redirect(`/admin/students/${req.params.id}`);
   } catch (error) {
@@ -592,17 +585,13 @@ const postEditStudent = async (req, res) => {
     res.redirect('/admin/students');
   }
 };
+
 // --- Get Report Page ---
 const getReport = async (req, res) => {
   try {
     const schools  = await School.find().sort({ name: 1 });
     const subjects = await Subject.find().sort({ name: 1 });
-
-    res.render('admin/report', {
-      title:   'Performance Report',
-      schools,
-      subjects
-    });
+    res.render('admin/report', { title: 'Performance Report', schools, subjects });
   } catch (error) {
     console.error('Get report error:', error.message);
     req.flash('error_msg', 'Could not load report page.');
@@ -616,16 +605,13 @@ const downloadReport = async (req, res) => {
     const ExcelJS  = require('exceljs');
     const { schoolId, subjectId, studentClass, dateFrom, dateTo } = req.query;
 
-    // --- Build student filter ---
     const studentFilter = { role: 'student' };
-    if (schoolId)      studentFilter.schoolId = schoolId;
-    if (studentClass)  studentFilter.class    = studentClass;
+    if (schoolId)     studentFilter.schoolId = schoolId;
+    if (studentClass) studentFilter.class    = studentClass;
 
-    // Get matching students
-    const students = await User.find(studentFilter).populate('schoolId');
+    const students   = await User.find(studentFilter).populate('schoolId');
     const studentIds = students.map(s => s._id);
 
-    // --- Build exam filter ---
     const examFilter = { studentId: { $in: studentIds }, status: 'completed' };
     if (dateFrom || dateTo) {
       examFilter.dateTaken = {};
@@ -633,72 +619,69 @@ const downloadReport = async (req, res) => {
       if (dateTo)   examFilter.dateTaken.$lte = new Date(dateTo);
     }
 
-    // Get student exams
     let studentExams = await StudentExam.find(examFilter)
-      .populate({ path: 'examId', populate: { path: 'subjectId' } })
+      .populate({
+        path: 'examId',
+        populate: { path: 'subjects.subjectId' }
+      })
       .populate('studentId')
       .sort({ dateTaken: -1 });
 
     // Filter by subject if selected
     if (subjectId) {
-      studentExams = studentExams.filter(
-        se => se.examId && se.examId.subjectId &&
-              se.examId.subjectId._id.toString() === subjectId
-      );
+      studentExams = studentExams.filter(se => {
+        if (!se.examId || !se.examId.subjects) return false;
+        return se.examId.subjects.some(
+          s => s.subjectId && s.subjectId._id.toString() === subjectId
+        );
+      });
     }
 
-    // --- Create Excel workbook ---
     const workbook  = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Performance Report');
 
-    // --- Header row styling ---
     worksheet.columns = [
-      { header: 'Full Name',    key: 'fullname',    width: 25 },
-      { header: 'Class',        key: 'class',        width: 10 },
-      { header: 'Department',   key: 'department',   width: 15 },
-      { header: 'School',       key: 'school',       width: 25 },
-      { header: 'Subject',      key: 'subject',      width: 20 },
-      { header: 'Score (%)',    key: 'score',        width: 12 },
-      { header: 'Pass / Fail',  key: 'passfail',     width: 12 },
-      { header: 'Date Taken',   key: 'dateTaken',    width: 18 }
+      { header: 'Full Name',   key: 'fullname',   width: 25 },
+      { header: 'Class',       key: 'class',      width: 10 },
+      { header: 'Department',  key: 'department', width: 15 },
+      { header: 'School',      key: 'school',     width: 25 },
+      { header: 'Exam Type',   key: 'examType',   width: 15 },
+      { header: 'Score (%)',   key: 'score',      width: 12 },
+      { header: 'Pass / Fail', key: 'passfail',   width: 12 },
+      { header: 'Date Taken',  key: 'dateTaken',  width: 18 }
     ];
 
-    // Style the header row
     const headerRow = worksheet.getRow(1);
     headerRow.eachCell(function(cell) {
-      cell.font       = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Arial' };
-      cell.fill       = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
-      cell.alignment  = { horizontal: 'center', vertical: 'middle' };
-      cell.border     = {
-        top:    { style: 'thin' },
-        left:   { style: 'thin' },
-        bottom: { style: 'thin' },
-        right:  { style: 'thin' }
+      cell.font      = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Arial' };
+      cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border    = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
       };
     });
     headerRow.height = 25;
 
-    // --- Add data rows ---
     studentExams.forEach(function(se, index) {
-      const student    = se.studentId;
-      const subject    = se.examId && se.examId.subjectId ? se.examId.subjectId.name : 'N/A';
-      const score      = se.score;
-      const passFail   = score >= 40 ? 'PASS' : 'FAIL';
-      const school     = student && student.schoolId ? student.schoolId.name : 'N/A';
-      const fullname   = student ? `${student.surname} ${student.firstname}` : 'N/A';
+      const student  = se.studentId;
+      const examType = se.examId ? se.examId.examType : 'N/A';
+      const score    = se.score;
+      const passFail = score >= 40 ? 'PASS' : 'FAIL';
+      const school   = student && student.schoolId ? student.schoolId.name : 'N/A';
+      const fullname = student ? `${student.surname} ${student.firstname}` : 'N/A';
 
       const row = worksheet.addRow({
         fullname,
         class:      student ? student.class      : 'N/A',
         department: student ? student.department  : 'N/A',
         school,
-        subject,
+        examType,
         score,
         passfail:   passFail,
-        dateTaken:  se.dateTaken.toDateString()
+        dateTaken:  se.dateTaken ? se.dateTaken.toDateString() : 'N/A'
       });
 
-      // Alternate row colors
       const bgColor = index % 2 === 0 ? 'FFF8F9FA' : 'FFFFFFFF';
       row.eachCell(function(cell) {
         cell.font      = { name: 'Arial', size: 10 };
@@ -712,43 +695,31 @@ const downloadReport = async (req, res) => {
         };
       });
 
-      // Color pass/fail cell
-      const passFailCell = row.getCell('passfail');
-      passFailCell.font = {
-        bold:  true,
-        name:  'Arial',
+      row.getCell('passfail').font = {
+        bold: true, name: 'Arial',
         color: { argb: passFail === 'PASS' ? 'FF28A745' : 'FFDC3545' }
       };
-
-      // Color score cell
-      const scoreCell = row.getCell('score');
-      scoreCell.font = {
-        bold:  true,
-        name:  'Arial',
+      row.getCell('score').font = {
+        bold: true, name: 'Arial',
         color: { argb: score >= 40 ? 'FF28A745' : 'FFDC3545' }
       };
     });
 
-    // --- Summary row at the bottom ---
-    worksheet.addRow({}); // empty row
-    const totalRow   = worksheet.addRow({
-      fullname:  'TOTAL RECORDS',
-      score:     `=AVERAGE(F2:F${studentExams.length + 1})`
+    worksheet.addRow({});
+    const totalRow = worksheet.addRow({
+      fullname: 'AVERAGE SCORE',
+      score:    `=AVERAGE(F2:F${studentExams.length + 1})`
     });
-    totalRow.getCell('fullname').font  = { bold: true, name: 'Arial' };
-    totalRow.getCell('score').font     = { bold: true, name: 'Arial' };
-    totalRow.getCell('score').numFmt   = '0.00"%"';
+    totalRow.getCell('fullname').font = { bold: true, name: 'Arial' };
+    totalRow.getCell('score').font    = { bold: true, name: 'Arial' };
+    totalRow.getCell('score').numFmt  = '0.00"%"';
 
-    // --- Set response headers for file download ---
     const filename = `performance-report-${Date.now()}.xlsx`;
     res.setHeader('Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-
-    // Write to response
     await workbook.xlsx.write(res);
     res.end();
-
   } catch (error) {
     console.error('Download report error:', error.message);
     req.flash('error_msg', 'Could not generate report.');
@@ -781,13 +752,15 @@ module.exports = {
   postCreateExam,
   getExamSettings,
   postExamSettings,
+  toggleExamVisibility,
+  deleteExam,
   getStudents,
   viewStudent,
   filterStudents,
   deleteStudentExam,
   resetStudentPassword,
-  postEditStudent,
   getEditStudent,
+  postEditStudent,
   getReport,
-downloadReport
+  downloadReport
 };

@@ -3,35 +3,83 @@
   <a href="/admin/exams/create" class="btn btn-primary">Create Exam</a>
 </div>
 
-<table class="table table-bordered table-hover">
-  <thead class="table-dark">
-    <tr>
-      <th>#</th>
-      <th>Subject</th>
-      <th>Questions</th>
-      <th>Timer (mins)</th>
-      <th>Retake Policy</th>
-      <th>Randomized</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% if (exams.length === 0) { %>
-      <tr><td colspan="7" class="text-center">No exams found.</td></tr>
-    <% } else { %>
-      <% exams.forEach((exam, index) => { %>
-        <tr>
-          <td><%= index + 1 %></td>
-          <td><%= exam.subjectId.name %></td>
-          <td><%= exam.questionCount %></td>
-          <td><%= exam.timer %></td>
-          <td><%= exam.retakePolicy %></td>
-          <td><%= exam.randomize ? 'Yes' : 'No' %></td>
-          <td>
-            <a href="/admin/exams/settings/<%= exam._id %>" class="btn btn-sm btn-warning">Settings</a>
-          </td>
-        </tr>
-      <% }) %>
-    <% } %>
-  </tbody>
-</table>
+<% if (exams.length === 0) { %>
+  <div class="alert alert-info">No exams created yet.</div>
+<% } else { %>
+  <% exams.forEach(function(exam) { %>
+    <div class="card shadow-sm mb-4">
+
+      <!-- Exam Type Header -->
+      <div class="card-header d-flex justify-content-between align-items-center"
+        style="background: #2c3e50; color: #fff;">
+        <div>
+          <h5 class="mb-0"><%= exam.examType %></h5>
+          <small>Created: <%= exam.createdAt.toDateString() %></small>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+
+          <!-- Visibility Badge -->
+          <span class="badge <%= exam.isVisible ? 'bg-success' : 'bg-secondary' %>">
+            <%= exam.isVisible ? 'Visible' : 'Hidden' %>
+          </span>
+
+          <!-- Toggle Visibility -->
+          <form action="/admin/exams/toggle-visibility/<%= exam._id %>" method="POST">
+            <button type="submit" class="btn btn-sm <%= exam.isVisible ? 'btn-warning' : 'btn-success' %>">
+              <%= exam.isVisible ? 'Hide' : 'Show' %>
+            </button>
+          </form>
+
+          <!-- Settings -->
+          <a href="/admin/exams/settings/<%= exam._id %>" class="btn btn-sm btn-light">
+            Settings
+          </a>
+
+          <!-- Delete -->
+          <form action="/admin/exams/delete/<%= exam._id %>" method="POST"
+            onsubmit="return confirm('Delete this exam? This cannot be undone.')">
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Subjects Table -->
+      <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Subject</th>
+              <th>Questions</th>
+              <th>Timer (mins)</th>
+              <th>Retake Policy</th>
+              <th>Randomized</th>
+              <th>Locked</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (exam.subjects.length === 0) { %>
+              <tr><td colspan="6" class="text-center">No subjects added.</td></tr>
+            <% } else { %>
+              <% exam.subjects.forEach(function(subject) { %>
+                <tr>
+                  <td><%= subject.subjectId ? subject.subjectId.name : 'N/A' %></td>
+                  <td><%= subject.questionCount %></td>
+                  <td><%= subject.timer %></td>
+                  <td><%= subject.retakePolicy %></td>
+                  <td><%= subject.randomize ? 'Yes' : 'No' %></td>
+                  <td>
+                    <span class="badge <%= subject.isLocked ? 'bg-danger' : 'bg-success' %>">
+                      <%= subject.isLocked ? 'Locked' : 'Open' %>
+                    </span>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  <% }) %>
+<% } %>

@@ -1,21 +1,26 @@
 const mongoose = require('mongoose');
 
-// Exam model - created by admin, pulls from question pool
+// Exam model - created by admin with type, subjects and visibility
 const ExamSchema = new mongoose.Schema({
-  adminId:       { type: mongoose.Schema.Types.ObjectId, ref: 'User',     required: true },
-  subjectId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Subject',  required: true },
+  adminId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
-  // Optional - if set, questions are pulled from this syllabus topic only
-  syllabusId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Syllabus', default: null },
+  // Exam type — WAEC, NECO, JAMB or custom
+  examType:       { type: String, required: true, trim: true },
 
-  // Questions auto-pulled from the subject/syllabus question pool
-  questions:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
+  // Each subject under this exam type has its own settings
+  subjects: [{
+    subjectId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
+    syllabusId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Syllabus', default: null },
+    questions:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
+    questionCount: { type: Number, required: true },
+    timer:         { type: Number, required: true },
+    randomize:     { type: Boolean, default: true },
+    retakePolicy:  { type: String, enum: ['once', 'unlimited', 'none'], default: 'once' },
+    isLocked:      { type: Boolean, default: false } // admin can lock subject
+  }],
 
-  // Exam settings set by admin
-  questionCount: { type: Number, required: true },
-  timer:         { type: Number, required: true },
-  randomize:     { type: Boolean, default: true },
-  retakePolicy:  { type: String, enum: ['once', 'unlimited', 'none'], default: 'once' }
+  // Visibility — hidden exams not shown to students
+  isVisible:      { type: Boolean, default: true }
 
 }, { timestamps: true });
 

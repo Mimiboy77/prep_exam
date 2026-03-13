@@ -1,28 +1,32 @@
-const Exam            = require('../models/Exam');
-const StudentExam     = require('../models/StudentExam');
-const User            = require('../models/User');
-const { getExamWithQuestions, canStudentTakeExam } = require('./examController');
+const Exam        = require('../models/Exam');
+const StudentExam = require('../models/StudentExam');
+const User        = require('../models/User');
 const { calculateScore } = require('../utils/helpers');
+
+// --- Check if student can take exam ---
+const canStudentTakeExam = async (studentId, examKey, retakePolicy) => {
+  const count = await StudentExam.countDocuments({
+    studentId,
+    examKey,
+    status: 'completed'
+  });
+  if (retakePolicy === 'none')      return count === 0;
+  if (retakePolicy === 'once')      return count < 2;
+  if (retakePolicy === 'unlimited') return true;
+  return false;
+};
 
 // --- Student Dashboard ---
 const getDashboard = async (req, res) => {
   try {
-    const studentId = req.session.user.id;
-
-    // Get student details with registered subjects
-    const student = await User.findById(studentId).populate('registeredSubjects');
-
-    // Get recent 5 exams taken by student
+    const studentId  = req.session.user.id;
+    const student    = await User.findById(studentId);
     const recentExams = await StudentExam.find({ studentId })
-      .populate({ path: 'examId', populate: { path: 'subjectId' } })
+      .populate({ path: 'examId', populate: { path: 'subjects.subjectId' } })
       .sort({ createdAt: -1 })
       .limit(5);
 
-    res.render('student/dashboard', {
-      title: 'Student Dashboard',
-      student,
-      recentExams
-    });
+    res.render('student/dashboard', { title: 'Student Dashboard', student, recentExams });
   } catch (error) {
     console.error('Student dashboard error:', error.message);
     req.flash('error_msg', 'Something went wrong.');
@@ -33,15 +37,11 @@ const getDashboard = async (req, res) => {
 // --- Get Available Exams ---
 const getAvailableExams = async (req, res) => {
   try {
-    const studentId = req.session.user.id;
-    const student   = await User.findById(studentId);
-
-    // Load all exams
-    const exams = await Exam.find()
-      .populate('subjectId')
+    const exams = await Exam.find({ isVisible: true })
+      .populate('subjects.subjectId')
       .sort({ createdAt: -1 });
 
-    res.render('student/exam/index', { title: 'Available Exams', exams, student });
+    res.render('student/exam/index', { title: 'Available Exams', exams });
   } catch (error) {
     console.error('Get available exams error:', error.message);
     req.flash('error_msg', 'Could not load exams.');
@@ -53,23 +53,36 @@ const getAvailableExams = async (req, res) => {
 const getInstruction = async (req, res) => {
   try {
     const studentId = req.session.user.id;
-    const examId    = req.params.examId;
+    const { examId, subjectId } = req.params;
 
-    // Load exam details
-    const exam = await Exam.findById(examId).populate('subjectId');
+    const exam = await Exam.findById(examId).populate('subjects.subjectId');
     if (!exam) {
       req.flash('error_msg', 'Exam not found.');
       return res.redirect('/student/exams');
     }
 
-    // Check if student is allowed to take this exam
-    const allowed = await canStudentTakeExam(studentId, examId, exam.retakePolicy);
+    const subjectSettings = exam.subjects.find(
+      s => s.subjectId && s.subjectId._id.toString() === subjectId
+    );
+
+    if (!subjectSettings) {
+      req.flash('error_msg', 'Subject not found in this exam.');
+      return res.redirect('/student/exams');
+    }
+
+    const examKey = examId + subjectId;
+    const allowed = await canStudentTakeExam(studentId, examKey, subjectSettings.retakePolicy);
     if (!allowed) {
       req.flash('error_msg', 'You have reached the maximum attempts for this exam.');
       return res.redirect('/student/exams');
     }
 
-    res.render('student/exam/instruction', { title: 'Exam Instructions', exam });
+    res.render('student/exam/instruction', {
+      title: 'Exam Instructions',
+      exam,
+      subjectSettings,
+      subjectId
+    });
   } catch (error) {
     console.error('Get instruction error:', error.message);
     req.flash('error_msg', 'Could not load exam instructions.');
@@ -81,32 +94,46 @@ const getInstruction = async (req, res) => {
 const startExam = async (req, res) => {
   try {
     const studentId = req.session.user.id;
-    const examId    = req.params.examId;
+    const { examId, subjectId } = req.params;
 
-    // Load exam with questions
-    const result = await getExamWithQuestions(examId);
-    if (!result) {
-      req.flash('error_msg', 'Could not load exam.');
+    const exam = await Exam.findById(examId).populate('subjects.subjectId');
+    if (!exam) {
+      req.flash('error_msg', 'Exam not found.');
       return res.redirect('/student/exams');
     }
 
-    const { exam, questions } = result;
+    const subjectSettings = exam.subjects.find(
+      s => s.subjectId && s.subjectId._id.toString() === subjectId
+    );
 
-    // Create a new StudentExam record with status in-progress
+    if (!subjectSettings) {
+      req.flash('error_msg', 'Subject not found in this exam.');
+      return res.redirect('/student/exams');
+    }
+
+    const Question = require('../models/Question');
+    let questions  = await Question.find({ _id: { $in: subjectSettings.questions } });
+
+    if (subjectSettings.randomize) {
+      questions = questions.sort(() => Math.random() - 0.5);
+    }
+
+    const examKey     = examId + subjectId;
     const studentExam = await StudentExam.create({
       studentId,
       examId,
+      examKey,
       status: 'in-progress'
     });
 
     res.render('student/exam/take', {
-  title:      'Take Exam',
-  exam,
-  questions,
-  studentExamId: studentExam._id,
-  layout:        false  // disable main layout for fullscreen exam
-});
-
+      title:         'Take Exam',
+      exam,
+      subjectSettings,
+      questions,
+      studentExamId: studentExam._id,
+      layout:        false
+    });
   } catch (error) {
     console.error('Start exam error:', error.message);
     req.flash('error_msg', 'Could not start exam.');
@@ -129,23 +156,27 @@ const submitExam = async (req, res) => {
   try {
     const { studentExamId, answersJson } = req.body;
 
-    // Load the StudentExam record
     const studentExam = await StudentExam.findById(studentExamId);
     if (!studentExam) {
       req.flash('error_msg', 'Exam session not found.');
       return res.redirect('/student/exams');
     }
 
-    // Load exam with questions
-    const result = await getExamWithQuestions(studentExam.examId);
-    if (!result) {
+    const exam = await Exam.findById(studentExam.examId);
+    if (!exam) {
       req.flash('error_msg', 'Could not load exam for scoring.');
       return res.redirect('/student/exams');
     }
 
-    const { questions } = result;
+    // Get all question IDs across all subjects in this exam
+    const allQuestionIds = exam.subjects.reduce((acc, s) => {
+      return acc.concat(s.questions);
+    }, []);
 
-    // Parse the JSON string of answers
+    const Question = require('../models/Question');
+    const questions = await Question.find({ _id: { $in: allQuestionIds } });
+
+    // Parse answers from JSON
     var parsedAnswers = [];
     if (answersJson && answersJson !== '{}' && answersJson !== '') {
       var answersObj = JSON.parse(answersJson);
@@ -157,10 +188,8 @@ const submitExam = async (req, res) => {
       });
     }
 
-    // Calculate score
     const score = calculateScore(parsedAnswers, questions);
 
-    // Save to database
     await StudentExam.findByIdAndUpdate(studentExamId, {
       answers:   parsedAnswers,
       score,
@@ -180,11 +209,9 @@ const submitExam = async (req, res) => {
 // --- Get All Results ---
 const getResults = async (req, res) => {
   try {
-    const studentId = req.session.user.id;
-
-    // Get all completed exams for this student
+    const studentId    = req.session.user.id;
     const studentExams = await StudentExam.find({ studentId, status: 'completed' })
-      .populate({ path: 'examId', populate: { path: 'subjectId' } })
+      .populate({ path: 'examId', populate: { path: 'subjects.subjectId' } })
       .sort({ createdAt: -1 });
 
     res.render('student/results/index', { title: 'My Results', studentExams });
@@ -200,25 +227,34 @@ const viewResult = async (req, res) => {
   try {
     const studentId   = req.session.user.id;
     const studentExam = await StudentExam.findOne({
-      _id:       req.params.id,
-      studentId
-    }).populate({ path: 'examId', populate: { path: 'subjectId' } });
+      _id: req.params.id, studentId
+    }).populate({ path: 'examId', populate: { path: 'subjects.subjectId' } });
 
     if (!studentExam) {
       req.flash('error_msg', 'Result not found.');
       return res.redirect('/student/results');
     }
 
-    // Load full question details for each answer
+    // Find the specific subject this exam attempt was for using examKey
+    const examKey         = studentExam.examKey; // examId + subjectId
+    const subjectSettings = studentExam.examId.subjects.find(function(s) {
+      return examKey === studentExam.examId._id.toString() + s.subjectId._id.toString();
+    });
+    const subjectName = subjectSettings ? subjectSettings.subjectId.name : 'Exam';
+
+    // Only load questions for this specific subject (not all subjects)
+    const questionIds = subjectSettings ? subjectSettings.questions : [];
+
     const Question = require('../models/Question');
     const questions = await Question.find({
-      _id: { $in: studentExam.examId.questions }
+      _id: { $in: questionIds }
     }).populate('syllabusId');
 
     res.render('student/results/view', {
-      title:      'Exam Result',
+      title: 'Exam Result',
       studentExam,
-      questions
+      questions,
+      subjectName
     });
   } catch (error) {
     console.error('View result error:', error.message);
@@ -230,39 +266,34 @@ const viewResult = async (req, res) => {
 // --- Get Progress ---
 const getProgress = async (req, res) => {
   try {
-    const studentId = req.session.user.id;
+    const studentId   = req.session.user.id;
     const { getRecommendations } = require('../utils/helpers');
 
-    // Get all completed exams for this student
     const studentExams = await StudentExam.find({ studentId, status: 'completed' })
-      .populate({ path: 'examId', populate: { path: 'subjectId' } })
+      .populate({ path: 'examId', populate: { path: 'subjects.subjectId' } })
       .sort({ createdAt: -1 });
 
-    // Group scores by subject
+    // Group scores by exam type
     const subjectScores = {};
-    studentExams.forEach(exam => {
-      const subjectName = exam.examId && exam.examId.subjectId
-        ? exam.examId.subjectId.name
-        : 'Unknown';
-
-      if (!subjectScores[subjectName]) {
-        subjectScores[subjectName] = { total: 0, count: 0, scores: [] };
+    studentExams.forEach(function(exam) {
+      const examType = exam.examId ? exam.examId.examType : 'Unknown';
+      if (!subjectScores[examType]) {
+        subjectScores[examType] = { total: 0, count: 0, scores: [] };
       }
-
-      subjectScores[subjectName].total  += exam.score;
-      subjectScores[subjectName].count  += 1;
-      subjectScores[subjectName].scores.push(exam.score);
+      subjectScores[examType].total  += exam.score;
+      subjectScores[examType].count  += 1;
+      subjectScores[examType].scores.push(exam.score);
     });
 
-    // Calculate average score per subject
-    const progress = Object.keys(subjectScores).map(subject => ({
-      subject,
-      average:    parseFloat((subjectScores[subject].total / subjectScores[subject].count).toFixed(2)),
-      attempts:   subjectScores[subject].count,
-      scores:     subjectScores[subject].scores
-    }));
+    const progress = Object.keys(subjectScores).map(function(subject) {
+      return {
+        subject,
+        average:  parseFloat((subjectScores[subject].total / subjectScores[subject].count).toFixed(2)),
+        attempts: subjectScores[subject].count,
+        scores:   subjectScores[subject].scores
+      };
+    });
 
-    // Get recommendations for weak topics
     const recommendations = getRecommendations(studentExams);
 
     res.render('student/results/progress', {
@@ -277,13 +308,13 @@ const getProgress = async (req, res) => {
     res.redirect('/student/dashboard');
   }
 };
+
 // --- Get Student Profile ---
 const getProfile = async (req, res) => {
   try {
     const studentId = req.session.user.id;
     const student   = await User.findById(studentId).populate('schoolId');
     const schools   = await require('../models/School').find().sort({ name: 1 });
-
     res.render('student/profile', { title: 'My Profile', student, schools });
   } catch (error) {
     console.error('Get profile error:', error.message);
@@ -298,19 +329,10 @@ const postProfile = async (req, res) => {
     const studentId = req.session.user.id;
     const { surname, firstname, studentClass, department, schoolId } = req.body;
 
-    const student = await User.findById(studentId);
-
-    // Check if surname changed — if so update password too
-    let updateData = {
-      surname,
-      firstname,
-      class:      studentClass,
-      department,
-      schoolId
-    };
+    const student  = await User.findById(studentId);
+    let updateData = { surname, firstname, class: studentClass, department, schoolId };
 
     if (surname.toLowerCase() !== student.surname.toLowerCase()) {
-      // Surname changed — reset password to new surname
       const bcrypt         = require('bcryptjs');
       const hashedPassword = await bcrypt.hash(surname.toLowerCase(), 10);
       updateData.password  = hashedPassword;
@@ -322,10 +344,7 @@ const postProfile = async (req, res) => {
     }
 
     await User.findByIdAndUpdate(studentId, updateData);
-
-    // Update session with new surname
     req.session.user.surname = surname;
-
     res.redirect('/student/profile');
   } catch (error) {
     console.error('Update profile error:', error.message);
@@ -333,6 +352,7 @@ const postProfile = async (req, res) => {
     res.redirect('/student/profile');
   }
 };
+
 module.exports = {
   getDashboard,
   getAvailableExams,

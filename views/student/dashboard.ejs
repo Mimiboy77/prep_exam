@@ -37,6 +37,7 @@
   <thead class="table-dark">
     <tr>
       <th>#</th>
+      <th>Exam Type</th>
       <th>Subject</th>
       <th>Score</th>
       <th>Status</th>
@@ -45,19 +46,33 @@
   </thead>
   <tbody>
     <% if (recentExams.length === 0) { %>
-      <tr><td colspan="5" class="text-center">No exams taken yet.</td></tr>
+      <tr><td colspan="6" class="text-center">No exams taken yet.</td></tr>
     <% } else { %>
-      <% recentExams.forEach((exam, index) => { %>
+      <% recentExams.forEach(function(exam, index) { %>
+        <%
+          var subjectName = 'N/A';
+          if (exam.examId && exam.examKey) {
+            var matchedSubject = exam.examId.subjects.find(function(s) {
+              return s.subjectId && (exam.examId._id.toString() + s.subjectId._id.toString()) === exam.examKey;
+            });
+            if (matchedSubject) subjectName = matchedSubject.subjectId.name;
+          }
+        %>
         <tr>
           <td><%= index + 1 %></td>
-          <td><%= exam.examId && exam.examId.subjectId ? exam.examId.subjectId.name : 'N/A' %></td>
-          <td><%= exam.score %>%</td>
+          <td><%= exam.examId ? exam.examId.examType : 'N/A' %></td>
+          <td><%= subjectName %></td>
+          <td>
+            <span class="badge bg-<%= exam.score >= 40 ? 'success' : 'danger' %>">
+              <%= exam.score %>%
+            </span>
+          </td>
           <td>
             <span class="badge bg-<%= exam.status === 'completed' ? 'success' : 'warning' %>">
               <%= exam.status %>
             </span>
           </td>
-          <td><%= exam.dateTaken.toDateString() %></td>
+          <td><%= exam.dateTaken ? exam.dateTaken.toDateString() : 'N/A' %></td>
         </tr>
       <% }) %>
     <% } %>

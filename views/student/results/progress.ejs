@@ -15,13 +15,13 @@
   </div>
 </div>
 
-<!-- Progress by Subject -->
-<h4 class="mb-3">Performance by Subject</h4>
+<!-- Progress by Exam Type -->
+<h4 class="mb-3">Performance by Exam Type</h4>
 <table class="table table-bordered table-hover mb-4">
   <thead class="table-dark">
     <tr>
       <th>#</th>
-      <th>Subject</th>
+      <th>Exam Type</th>
       <th>Attempts</th>
       <th>Average Score</th>
       <th>Performance</th>
@@ -31,19 +31,19 @@
     <% if (progress.length === 0) { %>
       <tr><td colspan="5" class="text-center">No progress data yet. Take an exam first!</td></tr>
     <% } else { %>
-      <% progress.forEach((item, index) => { %>
+      <% progress.forEach(function(item, index) { %>
         <tr>
           <td><%= index + 1 %></td>
           <td><%= item.subject %></td>
           <td><%= item.attempts %></td>
           <td>
-            <span class="badge bg-<%= item.average >= 50 ? 'success' : 'danger' %>">
+            <span class="badge bg-<%= item.average >= 40 ? 'success' : 'danger' %>">
               <%= item.average %>%
             </span>
           </td>
           <td>
             <div class="progress">
-              <div class="progress-bar bg-<%= item.average >= 50 ? 'success' : 'danger' %>"
+              <div class="progress-bar bg-<%= item.average >= 40 ? 'success' : 'danger' %>"
                 style="width: <%= item.average %>%">
                 <%= item.average %>%
               </div>
@@ -62,7 +62,7 @@
     Great job! You are performing well in all subjects. Keep it up!
   </div>
 <% } else { %>
-  <% recommendations.forEach(rec => { %>
+  <% recommendations.forEach(function(rec) { %>
     <div class="alert alert-warning">
       <strong><%= rec.topic %></strong> — Average Score: <%= rec.averageScore %>%
       <br/>
