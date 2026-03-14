@@ -726,6 +726,52 @@ const downloadReport = async (req, res) => {
     res.redirect('/admin/report');
   }
 };
+// --- Get Change Password Page ---
+const getChangePassword = async (req, res) => {
+  try {
+    res.render('admin/change-password', { title: 'Change Password' });
+  } catch (error) {
+    console.error('Get change password error:', error.message);
+    res.redirect('/admin/dashboard');
+  }
+};
+
+// --- Post Change Password ---
+const postChangePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const adminId = req.session.user.id;
+
+    if (newPassword !== confirmPassword) {
+      req.flash('error_msg', 'New passwords do not match.');
+      return res.redirect('/admin/change-password');
+    }
+
+    if (newPassword.length < 6) {
+      req.flash('error_msg', 'New password must be at least 6 characters.');
+      return res.redirect('/admin/change-password');
+    }
+
+    const bcrypt = require('bcryptjs');
+    const admin  = await User.findById(adminId);
+
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) {
+      req.flash('error_msg', 'Current password is incorrect.');
+      return res.redirect('/admin/change-password');
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(adminId, { password: hashed });
+
+    req.flash('success_msg', 'Password changed successfully.');
+    res.redirect('/admin/dashboard');
+  } catch (error) {
+    console.error('Change password error:', error.message);
+    req.flash('error_msg', 'Could not change password.');
+    res.redirect('/admin/change-password');
+  }
+};
 
 module.exports = {
   getDashboard,
@@ -762,5 +808,7 @@ module.exports = {
   getEditStudent,
   postEditStudent,
   getReport,
-  downloadReport
+  downloadReport,
+  getChangePassword,
+postChangePassword
 };

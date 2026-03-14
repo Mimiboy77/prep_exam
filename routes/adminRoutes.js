@@ -57,4 +57,6 @@ router.post('/students/edit/:id', adminController.postEditStudent);
 // --- Reports ---
 router.get('/report',          adminController.getReport);
 router.get('/report/download', adminController.downloadReport);
+router.get('/change-password', adminController.getChangePassword);
+router.post('/change-password', adminController.postChangePassword);
 module.exports = router;

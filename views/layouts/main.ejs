@@ -60,6 +60,15 @@
               <a class="nav-link" href="/admin/report">📊 Reports</a>
             </li>
 
+            <!-- Account dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#"
+                data-bs-toggle="dropdown">👤 Account</a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><a class="dropdown-item" href="/admin/change-password">🔒 Change Password</a></li>
+              </ul>
+            </li>
+
           <!-- ========== TEACHER NAV ========== -->
           <% } else if (user && user.role === 'teacher') { %>
 
