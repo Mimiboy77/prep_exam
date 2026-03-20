@@ -11,7 +11,7 @@
         <div class="col-md-4">
           <label class="form-label fw-bold">Exam Type</label>
           <select name="examType" class="form-select" id="examTypeSelect"
-            onchange="toggleCustomName(this.value)" required>
+            onchange="handleExamTypeChange(this.value)" required>
             <option value="">-- Select Exam Type --</option>
             <option value="WAEC">WAEC</option>
             <option value="NECO">NECO</option>
@@ -38,15 +38,56 @@
         </div>
       </div>
 
+      <!-- JAMB Settings Panel (hidden by default) -->
+      <div id="jambSettingsPanel" class="d-none">
+        <div class="alert alert-info border-start border-4 border-info mb-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h6 class="mb-1 fw-bold">
+                <i class="bi bi-info-circle"></i> JAMB Exam Settings
+              </h6>
+              <small class="text-muted">
+                English Language is compulsory (60 questions).
+                Add elective subjects (40 questions each).
+                Students will pick 3 electives when starting the exam.
+                One shared timer for the entire exam.
+              </small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1">Total Timer (minutes)</label>
+              <input type="number" name="jambTimer" id="jambTimer"
+                class="form-control" value="120" min="1" />
+              <small class="text-muted">Default: 120 mins (2 hours)</small>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" name="isJamb" id="isJambHidden" value="false" />
+      </div>
+
       <hr/>
 
       <!-- Subjects Section -->
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Subjects</h5>
-        <button type="button" class="btn btn-success btn-sm"
-          onclick="addSubjectRow()">
-          + Add Subject
-        </button>
+        <div>
+          <!-- JAMB: separate buttons for compulsory and elective -->
+          <span id="jambSubjectButtons" class="d-none">
+            <button type="button" class="btn btn-dark btn-sm me-2"
+              onclick="addJambCompulsoryRow()"
+              id="addEnglishBtn">
+              + Add English (Compulsory)
+            </button>
+            <button type="button" class="btn btn-success btn-sm"
+              onclick="addJambElectiveRow()">
+              + Add Elective Subject
+            </button>
+          </span>
+          <!-- Non-JAMB: single add button -->
+          <button type="button" class="btn btn-success btn-sm"
+            id="addSubjectBtn" onclick="addSubjectRow()">
+            + Add Subject
+          </button>
+        </div>
       </div>
 
       <div id="subjectsContainer">
@@ -62,7 +103,7 @@
   </div>
 </div>
 
-<!-- Subject Row Template -->
+<!-- ── TEMPLATE: Normal Subject Row (non-JAMB) ────────────────── -->
 <template id="subjectRowTemplate">
   <div class="subject-row card border mb-3">
     <div class="card-body">
@@ -73,7 +114,6 @@
       </div>
 
       <div class="row g-3">
-
         <div class="col-md-4">
           <label class="form-label">Subject</label>
           <select name="subjectIds" class="form-select subject-select" required
@@ -113,8 +153,7 @@
 
         <div class="col-md-3 d-flex align-items-end gap-3">
           <div class="form-check">
-            <input type="checkbox" name="randomizes" class="form-check-input"
-              id="randomize" checked />
+            <input type="checkbox" name="randomizes" class="form-check-input" checked />
             <label class="form-check-label">Randomize</label>
           </div>
           <div class="form-check">
@@ -123,56 +162,236 @@
           </div>
         </div>
 
+        <!-- Hidden fields for non-JAMB -->
+        <input type="hidden" name="isCompulsory" value="false" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ── TEMPLATE: JAMB Compulsory Subject Row (English) ───────── -->
+<template id="jambCompulsoryTemplate">
+  <div class="subject-row card border border-warning mb-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">
+          <span class="badge bg-warning text-dark me-2">Compulsory</span>
+          English Language — 60 Questions
+        </h6>
+        <button type="button" class="btn btn-sm btn-outline-danger"
+          onclick="removeSubjectRow(this)">Remove</button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Subject</label>
+          <select name="subjectIds" class="form-select subject-select" required
+            onchange="loadSyllabus(this)">
+            <option value="">-- Select Subject --</option>
+            <% subjects.forEach(function(subject) { %>
+              <option value="<%= subject._id %>"><%= subject.name %></option>
+            <% }) %>
+          </select>
+          <small class="text-muted">Select English Language</small>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Syllabus Topic <span class="text-muted">(optional)</span></label>
+          <select name="syllabusIds" class="form-select syllabus-select">
+            <option value="">-- All Topics --</option>
+          </select>
+        </div>
+
+        <!-- Fixed for JAMB English -->
+        <input type="hidden" name="questionCounts" value="60" />
+        <input type="hidden" name="timers" value="0" />
+        <input type="hidden" name="retakePolicies" value="once" />
+        <input type="hidden" name="randomizes" value="true" />
+        <input type="hidden" name="isLocked" value="false" />
+        <input type="hidden" name="isCompulsory" value="true" />
+
+        <div class="col-12">
+          <div class="alert alert-warning py-2 mb-0">
+            <small>
+              <strong>Fixed:</strong> 60 questions · Timer shared with full exam ·
+              Students cannot deselect English
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ── TEMPLATE: JAMB Elective Subject Row ────────────────────── -->
+<template id="jambElectiveTemplate">
+  <div class="subject-row card border border-success mb-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">
+          <span class="badge bg-success me-2">Elective</span>
+          40 Questions
+        </h6>
+        <button type="button" class="btn btn-sm btn-outline-danger"
+          onclick="removeSubjectRow(this)">Remove</button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Subject</label>
+          <select name="subjectIds" class="form-select subject-select" required
+            onchange="loadSyllabus(this)">
+            <option value="">-- Select Subject --</option>
+            <% subjects.forEach(function(subject) { %>
+              <option value="<%= subject._id %>"><%= subject.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Syllabus Topic <span class="text-muted">(optional)</span></label>
+          <select name="syllabusIds" class="form-select syllabus-select">
+            <option value="">-- All Topics --</option>
+          </select>
+        </div>
+
+        <!-- Fixed for JAMB elective -->
+        <input type="hidden" name="questionCounts" value="40" />
+        <input type="hidden" name="timers" value="0" />
+        <input type="hidden" name="retakePolicies" value="once" />
+        <input type="hidden" name="randomizes" value="true" />
+        <input type="hidden" name="isLocked" value="false" />
+        <input type="hidden" name="isCompulsory" value="false" />
+
+        <div class="col-12">
+          <div class="alert alert-success py-2 mb-0">
+            <small>
+              <strong>Fixed:</strong> 40 questions · Timer shared with full exam ·
+              Students select 3 from all electives you add
+            </small>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  // Syllabus data from server
   const allSyllabus = <%- JSON.stringify(syllabus) %>;
+  let isJambMode = false;
 
-  // Show or hide custom name input
-  function toggleCustomName(value) {
-    var div = document.getElementById('customNameDiv');
+  // ── Handle exam type change ──────────────────────────────────
+  function handleExamTypeChange(value) {
+    // Show/hide custom name input
+    var customDiv = document.getElementById('customNameDiv');
     if (value === 'custom') {
-      div.classList.remove('d-none');
+      customDiv.classList.remove('d-none');
     } else {
-      div.classList.add('d-none');
+      customDiv.classList.add('d-none');
+    }
+
+    // Show/hide JAMB settings
+    var jambPanel      = document.getElementById('jambSettingsPanel');
+    var jambBtns       = document.getElementById('jambSubjectButtons');
+    var normalBtn      = document.getElementById('addSubjectBtn');
+    var isJambHidden   = document.getElementById('isJambHidden');
+    var container      = document.getElementById('subjectsContainer');
+
+    if (value === 'JAMB') {
+      isJambMode = true;
+      jambPanel.classList.remove('d-none');
+      jambBtns.classList.remove('d-none');
+      normalBtn.classList.add('d-none');
+      isJambHidden.value = 'true';
+      // Clear existing rows and add English compulsory row
+      container.innerHTML = '';
+      addJambCompulsoryRow();
+    } else {
+      isJambMode = false;
+      jambPanel.classList.add('d-none');
+      jambBtns.classList.add('d-none');
+      normalBtn.classList.remove('d-none');
+      isJambHidden.value = 'false';
+      // Clear and add one blank subject row
+      container.innerHTML = '';
+      addSubjectRow();
     }
   }
 
-  // Add a new subject row
+  // ── Add normal subject row (non-JAMB) ───────────────────────
   function addSubjectRow() {
-    var template  = document.getElementById('subjectRowTemplate');
-    var clone     = template.content.cloneNode(true);
+    var template = document.getElementById('subjectRowTemplate');
+    var clone    = template.content.cloneNode(true);
     document.getElementById('subjectsContainer').appendChild(clone);
   }
 
-  // Remove a subject row
+  // ── Add JAMB compulsory row (English) ───────────────────────
+  function addJambCompulsoryRow() {
+    // Only allow one compulsory row
+    var existing = document.querySelectorAll('.border-warning');
+    if (existing.length > 0) {
+      alert('English (Compulsory) has already been added.');
+      return;
+    }
+    var template = document.getElementById('jambCompulsoryTemplate');
+    var clone    = template.content.cloneNode(true);
+    document.getElementById('subjectsContainer').appendChild(clone);
+  }
+
+  // ── Add JAMB elective row ───────────────────────────────────
+  function addJambElectiveRow() {
+    var template = document.getElementById('jambElectiveTemplate');
+    var clone    = template.content.cloneNode(true);
+    document.getElementById('subjectsContainer').appendChild(clone);
+  }
+
+  // ── Remove a subject row ────────────────────────────────────
   function removeSubjectRow(btn) {
     btn.closest('.subject-row').remove();
   }
 
-  // Load syllabus topics when subject changes
+  // ── Load syllabus topics when subject changes ───────────────
   function loadSyllabus(select) {
-    var subjectId     = select.value;
-    var row           = select.closest('.subject-row');
+    var subjectId      = select.value;
+    var row            = select.closest('.subject-row');
     var syllabusSelect = row.querySelector('.syllabus-select');
 
-    // Clear current options
     syllabusSelect.innerHTML = '<option value="">-- All Topics --</option>';
 
-    // Filter syllabus for selected subject
     allSyllabus.forEach(function(item) {
       if (item.subjectId && item.subjectId._id === subjectId) {
-        var option       = document.createElement('option');
-        option.value     = item._id;
+        var option         = document.createElement('option');
+        option.value       = item._id;
         option.textContent = item.topic;
         syllabusSelect.appendChild(option);
       }
     });
   }
+
+  // ── Validate form before submit ─────────────────────────────
+  document.getElementById('examForm').addEventListener('submit', function(e) {
+    if (isJambMode) {
+      var rows = document.querySelectorAll('.subject-row');
+      if (rows.length < 2) {
+        e.preventDefault();
+        alert('JAMB exam needs at least English (compulsory) + 1 elective subject.');
+        return;
+      }
+      var compulsory = document.querySelectorAll('.border-warning');
+      if (compulsory.length === 0) {
+        e.preventDefault();
+        alert('Please add English Language as the compulsory subject.');
+        return;
+      }
+    } else {
+      var rows = document.querySelectorAll('.subject-row');
+      if (rows.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one subject.');
+        return;
+      }
+    }
+  });
 
   // Add first subject row on page load
   addSubjectRow();

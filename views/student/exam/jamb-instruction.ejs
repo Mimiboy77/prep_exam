@@ -1,0 +1,196 @@
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card shadow">
+      <div class="card-header text-white fw-bold"
+        style="background: #2c3e50; font-size: 1.1rem;">
+        <i class="bi bi-info-circle me-2"></i>
+        JAMB Exam Instructions — <%= exam.examType %>
+      </div>
+
+      <div class="card-body p-4">
+
+        <!-- Exam Summary -->
+        <div class="card bg-light mb-4">
+          <div class="card-body py-3">
+            <div class="row text-center">
+              <div class="col-3 border-end">
+                <div class="fw-bold fs-4 text-primary"><%= selectedSubjects.length %></div>
+                <small class="text-muted">Subjects</small>
+              </div>
+              <div class="col-3 border-end">
+                <div class="fw-bold fs-4 text-primary">180</div>
+                <small class="text-muted">Questions</small>
+              </div>
+              <div class="col-3 border-end">
+                <div class="fw-bold fs-4 text-primary"><%= exam.jambTimer %></div>
+                <small class="text-muted">Minutes</small>
+              </div>
+              <div class="col-3">
+                <div class="fw-bold fs-4 text-primary">400</div>
+                <small class="text-muted">Total Marks</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Subjects Breakdown -->
+        <h6 class="fw-bold mb-3">Your Selected Subjects:</h6>
+        <table class="table table-bordered mb-4">
+          <thead class="table-dark">
+            <tr>
+              <th>Subject</th>
+              <th class="text-center">Questions</th>
+              <th class="text-center">Marks</th>
+              <th class="text-center">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% var totalQuestions = 0; %>
+            <% selectedSubjects.forEach(function(subject) { %>
+              <% totalQuestions += subject.questionCount; %>
+              <tr>
+                <td><strong><%= subject.subjectId.name %></strong></td>
+                <td class="text-center"><%= subject.questionCount %></td>
+                <td class="text-center">100</td>
+                <td class="text-center">
+                  <% if (subject.isCompulsory) { %>
+                    <span class="badge bg-warning text-dark">Compulsory</span>
+                  <% } else { %>
+                    <span class="badge bg-success">Elective</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <td><strong>Total</strong></td>
+              <td class="text-center"><strong><%= totalQuestions %></strong></td>
+              <td class="text-center"><strong>400</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Instructions -->
+        <h6 class="fw-bold mb-3">Read Before You Start:</h6>
+
+        <div class="row g-3 mb-4">
+
+          <div class="col-md-6">
+            <div class="card border-primary h-100">
+              <div class="card-body">
+                <h6 class="card-title text-primary">
+                  <i class="bi bi-clock me-1"></i> Timer
+                </h6>
+                <p class="card-text small mb-0">
+                  You have <strong><%= exam.jambTimer %> minutes</strong> for the
+                  entire exam. One shared countdown timer covers all subjects.
+                  The exam auto-submits when time runs out.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card border-success h-100">
+              <div class="card-body">
+                <h6 class="card-title text-success">
+                  <i class="bi bi-arrow-left-right me-1"></i> Switching Subjects
+                </h6>
+                <p class="card-text small mb-0">
+                  You can switch between subjects freely using the tabs at the
+                  top. Your answers are saved automatically when you switch.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card border-warning h-100">
+              <div class="card-body">
+                <h6 class="card-title text-warning">
+                  <i class="bi bi-pencil-square me-1"></i> Answering Questions
+                </h6>
+                <p class="card-text small mb-0">
+                  Each question has 4 options. Select one answer per question.
+                  You can review and change your answers at any time before
+                  submitting.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card border-danger h-100">
+              <div class="card-body">
+                <h6 class="card-title text-danger">
+                  <i class="bi bi-exclamation-triangle me-1"></i> Submission
+                </h6>
+                <p class="card-text small mb-0">
+                  Once you submit you <strong>cannot go back</strong>.
+                  Make sure you have answered as many questions as possible
+                  before submitting.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card border-info h-100">
+              <div class="card-body">
+                <h6 class="card-title text-info">
+                  <i class="bi bi-grid-3x3 me-1"></i> Question Palette
+                </h6>
+                <p class="card-text small mb-0">
+                  A question palette shows all question numbers.
+                  <span class="badge bg-success">Green</span> means answered,
+                  <span class="badge bg-secondary">Grey</span> means unanswered.
+                  Click any number to jump to that question.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card border-secondary h-100">
+              <div class="card-body">
+                <h6 class="card-title text-secondary">
+                  <i class="bi bi-bar-chart me-1"></i> Scoring
+                </h6>
+                <p class="card-text small mb-0">
+                  Each subject is marked out of <strong>100</strong>.
+                  Total score is out of <strong>400</strong>.
+                  There is no negative marking.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Warning -->
+        <div class="alert alert-warning mb-4">
+          <i class="bi bi-shield-exclamation me-2"></i>
+          <strong>Important:</strong> Do not refresh the page or press the back
+          button during the exam. Doing so may result in loss of your answers.
+          Ensure you have a stable internet connection before starting.
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-3 align-items-center">
+          <a href="/student/exams/jamb/start/<%= exam._id %>"
+            class="btn btn-primary btn-lg px-5">
+            <i class="bi bi-play-fill me-1"></i> Start Exam Now
+          </a>
+          <a href="/student/exams" class="btn btn-outline-secondary">
+            &larr; Back to Exams
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

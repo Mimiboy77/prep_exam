@@ -7,41 +7,172 @@
     <div class="card shadow-sm mb-4">
 
       <!-- Exam Type Header -->
-      <div class="card-header text-white fw-bold"
+      <div class="card-header text-white fw-bold d-flex justify-content-between align-items-center"
         style="background: #2c3e50; font-size: 1.1rem;">
-        <%= exam.examType %>
+        <span>
+          <%= exam.examType %>
+          <% if (exam.isJamb) { %>
+            <span class="badge bg-warning text-dark ms-2">JAMB</span>
+          <% } %>
+        </span>
+        <% if (exam.isJamb) { %>
+          <small class="text-white-50">
+            180 Questions &nbsp;|&nbsp; <%= exam.jambTimer %> mins &nbsp;|&nbsp; Score out of 400
+          </small>
+        <% } %>
       </div>
 
-      <!-- Subjects -->
-      <div class="card-body p-0">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Subject</th>
-              <th>Questions</th>
-              <th>Timer (mins)</th>
-              <th>Retake Policy</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% exam.subjects.forEach(function(subject) { %>
+      <!-- ── JAMB Exam Layout ─────────────────────────────── -->
+      <% if (exam.isJamb) { %>
+        <div class="card-body">
+
+          <!-- JAMB info alert -->
+          <div class="alert alert-warning mb-3 py-2">
+            <strong>How JAMB works:</strong>
+            English Language is compulsory. You will select 3 elective subjects before starting.
+            All subjects share one timer of <strong><%= exam.jambTimer %> minutes</strong>.
+            You can switch between subjects freely during the exam.
+          </div>
+
+          <!-- Subjects table -->
+          <table class="table table-bordered mb-3">
+            <thead class="table-light">
               <tr>
-                <td><%= subject.subjectId ? subject.subjectId.name : 'N/A' %></td>
-                <td><%= subject.questionCount %></td>
-                <td><%= subject.timer %></td>
-                <td><%= subject.retakePolicy %></td>
-                <td>
-                  <a href="/student/exams/instruction/<%= exam._id %>/<%= subject.subjectId._id %>"
-                    class="btn btn-sm btn-primary">
-                    Start
-                  </a>
-                </td>
+                <th>Subject</th>
+                <th>Questions</th>
+                <th>Type</th>
+                <th>Marks</th>
               </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              <% exam.subjects.forEach(function(subject) { %>
+                <tr>
+                  <td>
+                    <%= subject.subjectId ? subject.subjectId.name : 'N/A' %>
+                  </td>
+                  <td><%= subject.questionCount %></td>
+                  <td>
+                    <% if (subject.isCompulsory) { %>
+                      <span class="badge bg-warning text-dark">Compulsory</span>
+                    <% } else { %>
+                      <span class="badge bg-success">Elective</span>
+                    <% } %>
+                  </td>
+                  <td>100</td>
+                </tr>
+              <% }) %>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="3"><strong>Total</strong></td>
+                <td><strong>400</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Single Start JAMB button -->
+          <%
+            // Check if student already completed this JAMB exam
+            var jambAttempt = null;
+            if (typeof studentExams !== 'undefined') {
+              studentExams.forEach(function(se) {
+                if (se.examId && se.examId._id &&
+                    se.examId._id.toString() === exam._id.toString() &&
+                    se.isJamb) {
+                  jambAttempt = se;
+                }
+              });
+            }
+          %>
+
+          <% if (jambAttempt && jambAttempt.status === 'completed') { %>
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge bg-success fs-6 px-3 py-2">
+                Completed — <%= jambAttempt.totalScore %> / 400
+              </span>
+              <a href="/student/results/<%= jambAttempt._id %>"
+                class="btn btn-outline-primary btn-sm">
+                View Result
+              </a>
+            </div>
+          <% } else if (jambAttempt && jambAttempt.status === 'in-progress') { %>
+            <a href="/student/exams/jamb/select-subjects/<%= exam._id %>"
+              class="btn btn-warning">
+              Continue JAMB Exam
+            </a>
+          <% } else { %>
+            <a href="/student/exams/jamb/select-subjects/<%= exam._id %>"
+              class="btn btn-primary px-4">
+              Start JAMB Exam &rarr;
+            </a>
+          <% } %>
+
+        </div>
+
+      <!-- ── Non-JAMB Exam Layout (unchanged) ────────────── -->
+      <% } else { %>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Subject</th>
+                <th>Questions</th>
+                <th>Timer (mins)</th>
+                <th>Retake Policy</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% exam.subjects.forEach(function(subject) { %>
+                <tr>
+                  <td><%= subject.subjectId ? subject.subjectId.name : 'N/A' %></td>
+                  <td><%= subject.questionCount %></td>
+                  <td><%= subject.timer %></td>
+                  <td><%= subject.retakePolicy %></td>
+                  <td>
+                    <%
+                      // Check attempt status for this subject
+                      var examKey = exam._id.toString() + subject.subjectId._id.toString();
+                      var attempt = null;
+                      if (typeof studentExams !== 'undefined') {
+                        studentExams.forEach(function(se) {
+                          if (se.examKey === examKey) attempt = se;
+                        });
+                      }
+                    %>
+                    <% if (attempt && attempt.status === 'completed') { %>
+                      <% if (subject.retakePolicy === 'unlimited') { %>
+                        <a href="/student/exams/instruction/<%= exam._id %>/<%= subject.subjectId._id %>"
+                          class="btn btn-sm btn-outline-primary">Retake</a>
+                        <a href="/student/results/<%= attempt._id %>"
+                          class="btn btn-sm btn-outline-secondary">Result</a>
+                      <% } else if (subject.retakePolicy === 'none') { %>
+                        <span class="badge bg-secondary">No Retake</span>
+                        <a href="/student/results/<%= attempt._id %>"
+                          class="btn btn-sm btn-outline-secondary">Result</a>
+                      <% } else { %>
+                        <span class="badge bg-success">Done</span>
+                        <a href="/student/results/<%= attempt._id %>"
+                          class="btn btn-sm btn-outline-secondary ms-1">Result</a>
+                      <% } %>
+                    <% } else if (attempt && attempt.status === 'in-progress') { %>
+                      <a href="/student/exams/instruction/<%= exam._id %>/<%= subject.subjectId._id %>"
+                        class="btn btn-sm btn-warning">Continue</a>
+                    <% } else { %>
+                      <% if (subject.isLocked) { %>
+                        <span class="badge bg-danger">Locked</span>
+                      <% } else { %>
+                        <a href="/student/exams/instruction/<%= exam._id %>/<%= subject.subjectId._id %>"
+                          class="btn btn-sm btn-primary">Start</a>
+                      <% } %>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
 
     </div>
   <% }) %>

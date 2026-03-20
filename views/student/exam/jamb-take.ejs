@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JAMB Exam</title>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+  <style>
+    body { background: #f0f2f5; font-family: Arial, sans-serif; }
+
+    /* ── Top Bar ── */
+    #topBar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: #2c3e50; color: #fff;
+      padding: 8px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #topBar .exam-title { font-weight: bold; font-size: 1rem; }
+    #timerBox {
+      background: #e74c3c; color: #fff;
+      padding: 6px 16px; border-radius: 6px;
+      font-size: 1.1rem; font-weight: bold; letter-spacing: 1px;
+    }
+    #timerBox.warning { background: #f39c12; }
+    #timerBox.danger  { background: #c0392b; animation: blink 1s infinite; }
+    @keyframes blink {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+    }
+
+    /* ── Subject Tabs ── */
+    #subjectTabs {
+      position: fixed; top: 52px; left: 0; right: 0; z-index: 999;
+      background: #fff; border-bottom: 2px solid #dee2e6;
+      display: flex; overflow-x: auto;
+    }
+    .subject-tab {
+      padding: 10px 20px; cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-weight: 600; font-size: 0.9rem;
+      white-space: nowrap; color: #6c757d;
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .subject-tab:hover { background: #f8f9fa; color: #2c3e50; }
+    .subject-tab.active {
+      color: #2c3e50; border-bottom-color: #2c3e50;
+      background: #f8f9fa;
+    }
+    .tab-progress {
+      font-size: 0.75rem; background: #dee2e6;
+      padding: 2px 7px; border-radius: 10px; color: #495057;
+    }
+    .subject-tab.active .tab-progress { background: #2c3e50; color: #fff; }
+
+    /* ── Main Layout ── */
+    #mainContent {
+      margin-top: 105px;
+      display: flex; gap: 0;
+    }
+
+    /* ── Question Panel ── */
+    #questionPanel {
+      flex: 1; padding: 20px;
+      min-height: calc(100vh - 105px);
+    }
+    .subject-panel { display: none; }
+    .subject-panel.active { display: block; }
+
+    .question-card {
+      background: #fff; border-radius: 10px;
+      padding: 24px; margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .question-number {
+      font-size: 0.8rem; font-weight: bold;
+      color: #6c757d; margin-bottom: 8px;
+    }
+    .question-text {
+      font-size: 1rem; font-weight: 500;
+      margin-bottom: 16px; line-height: 1.6;
+    }
+    .option-label {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 14px; border-radius: 8px;
+      border: 2px solid #dee2e6; margin-bottom: 8px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .option-label:hover { border-color: #2c3e50; background: #f8f9fa; }
+    .option-label.selected {
+      border-color: #2c3e50; background: #eaf0fb;
+    }
+    .option-radio { margin-top: 2px; accent-color: #2c3e50; }
+    .option-letter {
+      font-weight: bold; color: #2c3e50;
+      min-width: 22px;
+    }
+
+    .question-nav {
+      display: flex; justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    /* ── Palette Sidebar ── */
+    #paletteSidebar {
+      width: 220px; min-width: 220px;
+      background: #fff; border-left: 1px solid #dee2e6;
+      padding: 16px; position: sticky;
+      top: 105px; height: calc(100vh - 105px);
+      overflow-y: auto;
+    }
+    .palette-title {
+      font-weight: bold; font-size: 0.85rem;
+      color: #6c757d; margin-bottom: 10px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .palette-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 5px; margin-bottom: 16px;
+    }
+    .palette-btn {
+      width: 100%; aspect-ratio: 1;
+      border: none; border-radius: 5px;
+      font-size: 0.75rem; font-weight: bold;
+      background: #e9ecef; color: #495057;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .palette-btn:hover { background: #adb5bd; color: #fff; }
+    .palette-btn.answered { background: #28a745; color: #fff; }
+    .palette-btn.current  {
+      outline: 3px solid #2c3e50; outline-offset: 1px;
+    }
+
+    .palette-legend {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      font-size: 0.75rem; margin-bottom: 16px;
+    }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 3px;
+      display: inline-block; margin-right: 3px;
+    }
+
+    /* ── Submit Button ── */
+    #submitBtn {
+      width: 100%; padding: 10px;
+      background: #e74c3c; color: #fff;
+      border: none; border-radius: 8px;
+      font-weight: bold; font-size: 0.95rem;
+      cursor: pointer; transition: background 0.2s;
+    }
+    #submitBtn:hover { background: #c0392b; }
+
+    /* ── Answer Summary in Sidebar ── */
+    .answered-summary {
+      background: #f8f9fa; border-radius: 8px;
+      padding: 10px; margin-bottom: 16px;
+      font-size: 0.8rem;
+    }
+    .answered-summary .row { margin: 0; }
+    .summary-stat { text-align: center; padding: 4px; }
+    .summary-stat .num { font-size: 1.1rem; font-weight: bold; }
+
+    @media (max-width: 768px) {
+      #paletteSidebar { display: none; }
+      #questionPanel  { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────── -->
+<div id="topBar">
+  <div class="exam-title">
+    <i class="bi bi-mortarboard-fill me-2"></i>
+    JAMB <%= exam.examType %> Exam
+  </div>
+  <div id="timerBox">
+    <i class="bi bi-clock me-1"></i>
+    <span id="timerDisplay">--:--</span>
+  </div>
+</div>
+
+<!-- ── Subject Tabs ─────────────────────────────────────────── -->
+<div id="subjectTabs">
+  <% subjectsWithQuestions.forEach(function(subject, index) { %>
+    <div class="subject-tab <%= index === 0 ? 'active' : '' %>"
+      id="tab-<%= subject.subjectId._id %>"
+      onclick="switchSubject('<%= subject.subjectId._id %>')">
+      <%= subject.subjectId.name %>
+      <span class="tab-progress" id="tabprog-<%= subject.subjectId._id %>">
+        0 / <%= subject.questions.length %>
+      </span>
+    </div>
+  <% }) %>
+</div>
+
+<!-- ── Main Content ─────────────────────────────────────────── -->
+<div id="mainContent">
+
+  <!-- Question Panel -->
+  <div id="questionPanel">
+    <% subjectsWithQuestions.forEach(function(subject, sIndex) { %>
+      <div class="subject-panel <%= sIndex === 0 ? 'active' : '' %>"
+        id="panel-<%= subject.subjectId._id %>">
+
+        <% subject.questions.forEach(function(question, qIndex) { %>
+          <div class="question-card"
+            id="qcard-<%= subject.subjectId._id %>-<%= qIndex %>">
+
+            <div class="question-number">
+              Question <%= qIndex + 1 %> of <%= subject.questions.length %>
+            </div>
+
+            <div class="question-text">
+              <%= question.questionText %>
+            </div>
+
+            <%
+              var letters = ['A', 'B', 'C', 'D'];
+            %>
+            <% question.options.forEach(function(option, oIndex) { %>
+              <label class="option-label"
+                id="opt-<%= question._id %>-<%= oIndex %>"
+                onclick="selectAnswer(
+                  '<%= subject.subjectId._id %>',
+                  '<%= question._id %>',
+                  '<%= option.replace(/'/g, "\\'") %>',
+                  '<%= oIndex %>',
+                  <%= question.options.length %>
+                )">
+                <input
+                  type="radio"
+                  class="option-radio"
+                  name="q-<%= question._id %>"
+                  value="<%= option %>"
+                />
+                <span class="option-letter"><%= letters[oIndex] %>.</span>
+                <span><%= option %></span>
+              </label>
+            <% }) %>
+
+            <div class="question-nav">
+              <button class="btn btn-sm btn-outline-secondary"
+                onclick="scrollToQuestion('<%= subject.subjectId._id %>', <%= qIndex - 1 %>)"
+                <%= qIndex === 0 ? 'disabled' : '' %>>
+                &larr; Prev
+              </button>
+              <button class="btn btn-sm btn-outline-primary"
+                onclick="scrollToQuestion('<%= subject.subjectId._id %>', <%= qIndex + 1 %>)"
+                <%= qIndex === subject.questions.length - 1 ? 'disabled' : '' %>>
+                Next &rarr;
+              </button>
+            </div>
+
+          </div>
+        <% }) %>
+
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- Palette Sidebar -->
+  <div id="paletteSidebar">
+
+    <!-- Answer Summary -->
+    <div class="answered-summary">
+      <div class="row">
+        <div class="col-6 summary-stat border-end">
+          <div class="num text-success" id="totalAnswered">0</div>
+          <div class="text-muted">Answered</div>
+        </div>
+        <div class="col-6 summary-stat">
+          <div class="num text-danger" id="totalUnanswered">180</div>
+          <div class="text-muted">Remaining</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Palette Legend -->
+    <div class="palette-legend">
+      <span>
+        <span class="legend-dot" style="background:#28a745"></span>Answered
+      </span>
+      <span>
+        <span class="legend-dot" style="background:#e9ecef; border:1px solid #adb5bd"></span>Not answered
+      </span>
+    </div>
+
+    <!-- Per Subject Palette -->
+    <% subjectsWithQuestions.forEach(function(subject) { %>
+      <div id="palette-<%= subject.subjectId._id %>" style="display:none;">
+        <div class="palette-title"><%= subject.subjectId.name %></div>
+        <div class="palette-grid">
+          <% subject.questions.forEach(function(question, qIndex) { %>
+            <button
+              class="palette-btn"
+              id="pbtn-<%= subject.subjectId._id %>-<%= qIndex %>"
+              onclick="scrollToQuestion('<%= subject.subjectId._id %>', <%= qIndex %>)">
+              <%= qIndex + 1 %>
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+
+    <!-- Submit Button -->
+    <button id="submitBtn" onclick="confirmSubmit()">
+      <i class="bi bi-check2-square me-1"></i> Submit Exam
+    </button>
+
+  </div>
+
+</div>
+
+<!-- ── Hidden Submit Form ────────────────────────────────────── -->
+<form id="submitForm" action="/student/exams/jamb/submit" method="POST">
+  <input type="hidden" name="studentExamId" value="<%= studentExamId %>" />
+  <input type="hidden" name="jambAnswersJson" id="jambAnswersJson" value="{}" />
+</form>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+var JAMB_TIMER_SECONDS = <%= jambTimer %> * 60;
+var timerInterval;
+
+// answers[subjectId][questionId] = selectedOption
+var answers = {};
+
+// subjects metadata
+var subjectsMeta = [];
+<% subjectsWithQuestions.forEach(function(subject) { %>
+  subjectsMeta.push({
+    id:    '<%= subject.subjectId._id %>',
+    name:  '<%= subject.subjectId.name %>',
+    total: <%= subject.questions.length %>
+  });
+  answers['<%= subject.subjectId._id %>'] = {};
+<% }) %>
+
+var activeSubjectId = subjectsMeta[0].id;
+
+// ============================================================
+// TIMER
+// ============================================================
+function startTimer() {
+  var remaining = JAMB_TIMER_SECONDS;
+  updateTimerDisplay(remaining);
+
+  timerInterval = setInterval(function() {
+    remaining--;
+    updateTimerDisplay(remaining);
+
+    var timerBox = document.getElementById('timerBox');
+
+    if (remaining <= 300 && remaining > 60) {
+      timerBox.className = 'warning';
+    } else if (remaining <= 60) {
+      timerBox.className = 'danger';
+    }
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      autoSubmit();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(seconds) {
+  var h = Math.floor(seconds / 3600);
+  var m = Math.floor((seconds % 3600) / 60);
+  var s = seconds % 60;
+  var display = '';
+  if (h > 0) {
+    display = pad(h) + ':' + pad(m) + ':' + pad(s);
+  } else {
+    display = pad(m) + ':' + pad(s);
+  }
+  document.getElementById('timerDisplay').textContent = display;
+}
+
+function pad(n) {
+  return n < 10 ? '0' + n : '' + n;
+}
+
+// ============================================================
+// SWITCH SUBJECT TAB
+// ============================================================
+function switchSubject(subjectId) {
+  // Hide all panels
+  var panels = document.querySelectorAll('.subject-panel');
+  panels.forEach(function(p) { p.classList.remove('active'); });
+
+  // Deactivate all tabs
+  var tabs = document.querySelectorAll('.subject-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+
+  // Hide all palettes
+  subjectsMeta.forEach(function(s) {
+    var pal = document.getElementById('palette-' + s.id);
+    if (pal) pal.style.display = 'none';
+  });
+
+  // Show selected panel
+  var panel = document.getElementById('panel-' + subjectId);
+  if (panel) panel.classList.add('active');
+
+  // Activate tab
+  var tab = document.getElementById('tab-' + subjectId);
+  if (tab) tab.classList.add('active');
+
+  // Show palette
+  var palette = document.getElementById('palette-' + subjectId);
+  if (palette) palette.style.display = 'block';
+
+  activeSubjectId = subjectId;
+}
+
+// ============================================================
+// SELECT ANSWER
+// ============================================================
+function selectAnswer(subjectId, questionId, option, optionIndex, totalOptions) {
+  // Save answer
+  answers[subjectId][questionId] = option;
+
+  // Update option label styles
+  for (var i = 0; i < totalOptions; i++) {
+    var lbl = document.getElementById('opt-' + questionId + '-' + i);
+    if (lbl) lbl.classList.remove('selected');
+  }
+  var selected = document.getElementById('opt-' + questionId + '-' + optionIndex);
+  if (selected) selected.classList.add('selected');
+
+  // Check the radio
+  var radios = document.querySelectorAll('input[name="q-' + questionId + '"]');
+  if (radios[optionIndex]) radios[optionIndex].checked = true;
+
+  // Update palette for this subject
+  updatePalette(subjectId);
+
+  // Update tab progress
+  updateTabProgress(subjectId);
+
+  // Update total summary
+  updateTotalSummary();
+}
+
+// ============================================================
+// SCROLL TO QUESTION
+// ============================================================
+function scrollToQuestion(subjectId, qIndex) {
+  if (qIndex < 0) return;
+  var card = document.getElementById('qcard-' + subjectId + '-' + qIndex);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ============================================================
+// UPDATE PALETTE
+// ============================================================
+function updatePalette(subjectId) {
+  var subAnswers = answers[subjectId] || {};
+  var meta = subjectsMeta.find(function(s) { return s.id === subjectId; });
+  if (!meta) return;
+
+  for (var i = 0; i < meta.total; i++) {
+    var btn = document.getElementById('pbtn-' + subjectId + '-' + i);
+    if (!btn) continue;
+    // Get question id from the card
+    var card = document.getElementById('qcard-' + subjectId + '-' + i);
+    if (!card) continue;
+    var radios = card.querySelectorAll('.option-radio');
+    if (radios.length === 0) continue;
+    var qName = radios[0].name; // q-questionId
+    var qId   = qName.replace('q-', '');
+
+    if (subAnswers[qId]) {
+      btn.classList.add('answered');
+    } else {
+      btn.classList.remove('answered');
+    }
+  }
+}
+
+// ============================================================
+// UPDATE TAB PROGRESS
+// ============================================================
+function updateTabProgress(subjectId) {
+  var subAnswers = answers[subjectId] || {};
+  var count = Object.keys(subAnswers).length;
+  var meta  = subjectsMeta.find(function(s) { return s.id === subjectId; });
+  if (!meta) return;
+  var prog = document.getElementById('tabprog-' + subjectId);
+  if (prog) prog.textContent = count + ' / ' + meta.total;
+}
+
+// ============================================================
+// UPDATE TOTAL SUMMARY
+// ============================================================
+function updateTotalSummary() {
+  var totalAnswered = 0;
+  subjectsMeta.forEach(function(s) {
+    totalAnswered += Object.keys(answers[s.id] || {}).length;
+  });
+  var totalQuestions = 180;
+  document.getElementById('totalAnswered').textContent   = totalAnswered;
+  document.getElementById('totalUnanswered').textContent = totalQuestions - totalAnswered;
+}
+
+// ============================================================
+// CONFIRM AND SUBMIT
+// ============================================================
+function confirmSubmit() {
+  var totalAnswered = 0;
+  subjectsMeta.forEach(function(s) {
+    totalAnswered += Object.keys(answers[s.id] || {}).length;
+  });
+  var unanswered = 180 - totalAnswered;
+
+  var message = 'Are you sure you want to submit?\n\n' +
+    'Answered  : ' + totalAnswered + ' / 180\n' +
+    'Unanswered: ' + unanswered + '\n\n' +
+    'You cannot change your answers after submitting.';
+
+  if (confirm(message)) {
+    doSubmit();
+  }
+}
+
+function autoSubmit() {
+  alert('Time is up! Your exam is being submitted automatically.');
+  doSubmit();
+}
+
+function doSubmit() {
+  clearInterval(timerInterval);
+
+  // Build jambAnswersJson
+  // Format: { subjectId: { questionId: selectedOption } }
+  document.getElementById('jambAnswersJson').value = JSON.stringify(answers);
+  document.getElementById('submitForm').submit();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', function() {
+  // Show first subject palette
+  if (subjectsMeta.length > 0) {
+    var firstPalette = document.getElementById('palette-' + subjectsMeta[0].id);
+    if (firstPalette) firstPalette.style.display = 'block';
+  }
+
+  // Start timer
+  startTimer();
+
+  // Prevent accidental navigation
+  window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+  });
+});
+</script>
+
+</body>
+</html>

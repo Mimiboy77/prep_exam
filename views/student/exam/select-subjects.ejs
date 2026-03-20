@@ -1,0 +1,193 @@
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card shadow">
+      <div class="card-header text-white fw-bold"
+        style="background: #2c3e50; font-size: 1.1rem;">
+        <i class="bi bi-list-check me-2"></i>
+        Select Your JAMB Subjects — <%= exam.examType %>
+      </div>
+
+      <div class="card-body p-4">
+
+        <!-- Info alert -->
+        <div class="alert alert-info mb-4">
+          <h6 class="fw-bold mb-1">How to select your subjects:</h6>
+          <ul class="mb-0">
+            <li><strong>English Language</strong> is compulsory and already included.</li>
+            <li>Select exactly <strong>3 elective subjects</strong> from the list below.</li>
+            <li>You cannot change your selection once the exam starts.</li>
+          </ul>
+        </div>
+
+        <form action="/student/exams/jamb/select-subjects/<%= exam._id %>" method="POST"
+          id="selectSubjectsForm">
+
+          <!-- Compulsory Subject -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-warning mb-3">
+              <span class="badge bg-warning text-dark me-2">Compulsory</span>
+              Already Included
+            </h6>
+
+            <% compulsorySubjects.forEach(function(subject) { %>
+              <div class="card border-warning mb-2">
+                <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+                  <input type="checkbox" class="form-check-input"
+                    checked disabled style="width: 1.2rem; height: 1.2rem;" />
+                  <div>
+                    <strong><%= subject.subjectId.name %></strong>
+                    <span class="text-muted ms-2">— <%= subject.questionCount %> questions</span>
+                  </div>
+                  <span class="badge bg-warning text-dark ms-auto">100 marks</span>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- Elective Subjects -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-success mb-1">
+              <span class="badge bg-success me-2">Elective</span>
+              Choose 3 Subjects
+            </h6>
+            <small class="text-muted d-block mb-3">
+              Selected: <span id="selectedCount" class="fw-bold text-success">0</span> / 3
+            </small>
+
+            <% electiveSubjects.forEach(function(subject) { %>
+              <div class="card border mb-2 elective-card" id="card-<%= subject.subjectId._id %>">
+                <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+                  <input
+                    type="checkbox"
+                    class="form-check-input elective-checkbox"
+                    name="electiveSubjectIds"
+                    value="<%= subject.subjectId._id %>"
+                    id="elective-<%= subject.subjectId._id %>"
+                    style="width: 1.2rem; height: 1.2rem;"
+                    onchange="handleElectiveChange()"
+                  />
+                  <label class="form-check-label w-100 d-flex align-items-center"
+                    for="elective-<%= subject.subjectId._id %>" style="cursor: pointer;">
+                    <div>
+                      <strong><%= subject.subjectId.name %></strong>
+                      <span class="text-muted ms-2">— <%= subject.questionCount %> questions</span>
+                    </div>
+                    <span class="badge bg-success ms-auto">100 marks</span>
+                  </label>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- Summary -->
+          <div class="alert alert-secondary d-none" id="selectionSummary">
+            <strong>Your selected subjects:</strong>
+            <ul class="mb-0 mt-1" id="summaryList"></ul>
+          </div>
+
+          <!-- Error -->
+          <div class="alert alert-danger d-none" id="selectionError">
+            Please select exactly 3 elective subjects.
+          </div>
+
+          <!-- Total -->
+          <div class="card bg-light mb-4">
+            <div class="card-body py-2">
+              <div class="row text-center">
+                <div class="col-4 border-end">
+                  <div class="fw-bold fs-5">4</div>
+                  <small class="text-muted">Subjects</small>
+                </div>
+                <div class="col-4 border-end">
+                  <div class="fw-bold fs-5">180</div>
+                  <small class="text-muted">Questions</small>
+                </div>
+                <div class="col-4">
+                  <div class="fw-bold fs-5"><%= exam.jambTimer %> mins</div>
+                  <small class="text-muted">Total Time</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-5" id="proceedBtn" disabled>
+              Proceed to Instructions &rarr;
+            </button>
+            <a href="/student/exams" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function handleElectiveChange() {
+    var checkboxes = document.querySelectorAll('.elective-checkbox');
+    var checked    = document.querySelectorAll('.elective-checkbox:checked');
+    var count      = checked.length;
+
+    // Update counter
+    document.getElementById('selectedCount').textContent = count;
+
+    // Disable unchecked boxes when 3 are selected
+    checkboxes.forEach(function(cb) {
+      if (!cb.checked) {
+        cb.disabled = count >= 3;
+      }
+      // Highlight selected cards
+      var card = document.getElementById('card-' + cb.value);
+      if (cb.checked) {
+        card.classList.add('border-success', 'bg-light');
+      } else {
+        card.classList.remove('border-success', 'bg-light');
+      }
+    });
+
+    // Enable/disable proceed button
+    var proceedBtn = document.getElementById('proceedBtn');
+    proceedBtn.disabled = count !== 3;
+
+    // Show/hide error
+    var errorDiv = document.getElementById('selectionError');
+    errorDiv.classList.add('d-none');
+
+    // Update summary
+    var summaryDiv  = document.getElementById('selectionSummary');
+    var summaryList = document.getElementById('summaryList');
+
+    if (count > 0) {
+      summaryDiv.classList.remove('d-none');
+      summaryList.innerHTML = '';
+
+      // Always add English first
+      var li = document.createElement('li');
+      li.textContent = 'English Language (Compulsory)';
+      summaryList.appendChild(li);
+
+      // Add selected electives
+      checked.forEach(function(cb) {
+        var label = document.querySelector('label[for="' + cb.id + '"]');
+        var name  = label ? label.querySelector('strong').textContent : cb.value;
+        var li2   = document.createElement('li');
+        li2.textContent = name + ' (Elective)';
+        summaryList.appendChild(li2);
+      });
+    } else {
+      summaryDiv.classList.add('d-none');
+    }
+  }
+
+  // Validate on submit
+  document.getElementById('selectSubjectsForm').addEventListener('submit', function(e) {
+    var checked = document.querySelectorAll('.elective-checkbox:checked');
+    if (checked.length !== 3) {
+      e.preventDefault();
+      document.getElementById('selectionError').classList.remove('d-none');
+    }
+  });
+</script>

@@ -318,15 +318,18 @@ const getCreateExam = async (req, res) => {
 };
 
 // --- Handle Create Exam Form Submission ---
+// --- Handle Create Exam Form Submission ---
 const postCreateExam = async (req, res) => {
   try {
     const Question = require('../models/Question');
     const {
       examType, customExamName,
+      isJamb, jambTimer,
       subjectIds, syllabusIds,
       questionCounts, timers,
       randomizes, retakePolicies,
-      isLocked, isVisible
+      isLocked, isCompulsory,
+      isVisible
     } = req.body;
 
     // Use custom name if examType is 'custom'
@@ -337,52 +340,81 @@ const postCreateExam = async (req, res) => {
       return res.redirect('/admin/exams/create');
     }
 
+    // Detect if this is a JAMB exam
+    const isJambExam = isJamb === 'true';
+
     // Normalize all subject fields to arrays
     const subjectIdsArr     = Array.isArray(subjectIds)     ? subjectIds     : [subjectIds];
     const syllabusIdsArr    = Array.isArray(syllabusIds)    ? syllabusIds    : [syllabusIds];
     const questionCountsArr = Array.isArray(questionCounts) ? questionCounts : [questionCounts];
     const timersArr         = Array.isArray(timers)         ? timers         : [timers];
-    const randomizesArr     = Array.isArray(randomizes)     ? randomizes     : [randomizes];
+    const randomizesArr     = Array.isArray(randomizes)     ? randomizes     : (randomizes ? [randomizes] : []);
     const retakePoliciesArr = Array.isArray(retakePolicies) ? retakePolicies : [retakePolicies];
-    const isLockedArr       = Array.isArray(isLocked)       ? isLocked       : [isLocked];
+    const isLockedArr       = Array.isArray(isLocked)       ? isLocked       : (isLocked ? [isLocked] : []);
+    const isCompulsoryArr   = Array.isArray(isCompulsory)   ? isCompulsory   : [isCompulsory];
 
-    // Build subjects array
+    // ── JAMB validation ──────────────────────────────────────
+    if (isJambExam) {
+      const hasCompulsory = isCompulsoryArr.some(function(v) { return v === 'true'; });
+      if (!hasCompulsory) {
+        req.flash('error_msg', 'JAMB exam must have English Language as a compulsory subject.');
+        return res.redirect('/admin/exams/create');
+      }
+      if (subjectIdsArr.length < 2) {
+        req.flash('error_msg', 'JAMB exam must have English + at least one elective subject.');
+        return res.redirect('/admin/exams/create');
+      }
+    }
+
+    // ── Build subjects array ─────────────────────────────────
     const subjectsData = [];
+
     for (let i = 0; i < subjectIdsArr.length; i++) {
       const subjectId     = subjectIdsArr[i];
       const syllabusId    = syllabusIdsArr[i] || null;
       const questionCount = parseInt(questionCountsArr[i]);
-      const timer         = parseInt(timersArr[i]);
-      const randomize     = randomizesArr[i] === 'on';
-      const retakePolicy  = retakePoliciesArr[i];
-      const locked        = isLockedArr[i] === 'on';
+      const compulsory    = isCompulsoryArr[i] === 'true';
+
+      // For JAMB: timer is shared (stored as 0 per subject)
+      // For non-JAMB: use the per-subject timer
+      const timer        = isJambExam ? 0 : parseInt(timersArr[i]);
+      const randomize    = randomizesArr[i] === 'on' || randomizesArr[i] === 'true';
+      const retakePolicy = retakePoliciesArr[i] || 'once';
+      const locked       = isLockedArr[i] === 'on' || isLockedArr[i] === 'true';
 
       if (!subjectId) continue;
 
       // Build question filter
-      const filter = syllabusId ? { subjectId, syllabusId } : { subjectId };
+      const filter = syllabusId
+        ? { subjectId, syllabusId }
+        : { subjectId };
+
       let questions = await Question.find(filter);
 
       if (questions.length < questionCount) {
         req.flash('error_msg',
-          `Not enough questions for a subject. Only ${questions.length} available.`
+          `Not enough questions for one of the subjects. ` +
+          `Need ${questionCount} but only ${questions.length} available.`
         );
         return res.redirect('/admin/exams/create');
       }
 
       // Shuffle and pick questions
-      questions = questions.sort(() => Math.random() - 0.5);
-      const selectedQuestions = questions.slice(0, questionCount).map(q => q._id);
+      questions = questions.sort(function() { return Math.random() - 0.5; });
+      const selectedQuestions = questions.slice(0, questionCount).map(function(q) {
+        return q._id;
+      });
 
       subjectsData.push({
         subjectId,
         syllabusId,
-        questions:     selectedQuestions,
+        questions:    selectedQuestions,
         questionCount,
         timer,
         randomize,
         retakePolicy,
-        isLocked: locked
+        isLocked:     locked,
+        isCompulsory: compulsory
       });
     }
 
@@ -391,14 +423,17 @@ const postCreateExam = async (req, res) => {
       return res.redirect('/admin/exams/create');
     }
 
+    // ── Create the exam ──────────────────────────────────────
     await Exam.create({
       adminId:   req.session.user.id,
       examType:  finalExamType,
+      isJamb:    isJambExam,
+      jambTimer: isJambExam ? parseInt(jambTimer) || 120 : 0,
       subjects:  subjectsData,
       isVisible: isVisible === 'on'
     });
 
-    req.flash('success_msg', 'Exam created successfully.');
+    req.flash('success_msg', `${finalExamType} exam created successfully.`);
     res.redirect('/admin/exams');
   } catch (error) {
     console.error('Create exam error:', error.message);
