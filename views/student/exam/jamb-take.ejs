@@ -6,40 +6,28 @@
   <title>JAMB Exam</title>
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
-  <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
   <style>
-    body { background: #f0f2f5; font-family: Arial, sans-serif; }
+    body { background: #f0f2f5; margin: 0; padding: 0; }
 
     /* ── Top Bar ── */
-    #topBar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    .exam-header {
+      position: fixed; top: 0; left: 0; right: 0;
       background: #2c3e50; color: #fff;
-      padding: 8px 16px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    #topBar .exam-title { font-weight: bold; font-size: 1rem; }
-    #timerBox {
-      background: #e74c3c; color: #fff;
-      padding: 6px 16px; border-radius: 6px;
-      font-size: 1.1rem; font-weight: bold; letter-spacing: 1px;
-    }
-    #timerBox.warning { background: #f39c12; }
-    #timerBox.danger  { background: #c0392b; animation: blink 1s infinite; }
-    @keyframes blink {
-      0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+      padding: 10px 24px; z-index: 1000;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
 
     /* ── Subject Tabs ── */
-    #subjectTabs {
-      position: fixed; top: 52px; left: 0; right: 0; z-index: 999;
+    .subject-tabs {
+      position: fixed; top: 52px; left: 0; right: 0;
       background: #fff; border-bottom: 2px solid #dee2e6;
-      display: flex; overflow-x: auto;
+      display: flex; overflow-x: auto; z-index: 999;
     }
     .subject-tab {
       padding: 10px 20px; cursor: pointer;
       border-bottom: 3px solid transparent;
-      font-weight: 600; font-size: 0.9rem;
+      font-weight: 600; font-size: 0.88rem;
       white-space: nowrap; color: #6c757d;
       display: flex; align-items: center; gap: 6px;
       transition: all 0.2s;
@@ -49,269 +37,249 @@
       color: #2c3e50; border-bottom-color: #2c3e50;
       background: #f8f9fa;
     }
-    .tab-progress {
-      font-size: 0.75rem; background: #dee2e6;
+    .tab-badge {
+      font-size: 0.72rem; background: #dee2e6;
       padding: 2px 7px; border-radius: 10px; color: #495057;
     }
-    .subject-tab.active .tab-progress { background: #2c3e50; color: #fff; }
+    .subject-tab.active .tab-badge { background: #2c3e50; color: #fff; }
 
-    /* ── Main Layout ── */
-    #mainContent {
+    /* ── Timer ── */
+    .timer-box {
+      background: #fff3cd; border: 2px solid #ffc107;
+      color: #856404; padding: 5px 16px;
+      border-radius: 8px; font-weight: bold; font-size: 1rem;
+    }
+    .timer-box.danger {
+      background: #f8d7da; border-color: #dc3545;
+      color: #842029; animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+    }
+
+    /* ── Body ── */
+    .exam-body {
       margin-top: 105px;
-      display: flex; gap: 0;
+      padding: 24px 16px 60px;
+      max-width: 780px;
+      margin-left: auto; margin-right: auto;
     }
 
-    /* ── Question Panel ── */
-    #questionPanel {
-      flex: 1; padding: 20px;
-      min-height: calc(100vh - 105px);
-    }
+    /* ── Subject Panel ── */
     .subject-panel { display: none; }
     .subject-panel.active { display: block; }
 
+    /* ── Question Card ── */
     .question-card {
-      background: #fff; border-radius: 10px;
-      padding: 24px; margin-bottom: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      background: #fff; border-radius: 12px;
+      padding: 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
     }
-    .question-number {
-      font-size: 0.8rem; font-weight: bold;
-      color: #6c757d; margin-bottom: 8px;
+    .question-card.d-none { display: none !important; }
+
+    /* ── Options ── */
+    .option-item {
+      border: 2px solid #dee2e6; border-radius: 8px;
+      padding: 12px 16px; margin-bottom: 10px;
+      cursor: pointer; display: flex; align-items: center;
+      background: #fff; transition: all 0.15s;
     }
-    .question-text {
-      font-size: 1rem; font-weight: 500;
-      margin-bottom: 16px; line-height: 1.6;
+    .option-item:hover { border-color: #0d6efd; background: #f0f4ff; }
+    .option-item.selected {
+      border-color: #28a745; background: #d4edda; color: #155724;
     }
-    .option-label {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 10px 14px; border-radius: 8px;
-      border: 2px solid #dee2e6; margin-bottom: 8px;
-      cursor: pointer; transition: all 0.15s;
-    }
-    .option-label:hover { border-color: #2c3e50; background: #f8f9fa; }
-    .option-label.selected {
-      border-color: #2c3e50; background: #eaf0fb;
-    }
-    .option-radio { margin-top: 2px; accent-color: #2c3e50; }
     .option-letter {
-      font-weight: bold; color: #2c3e50;
-      min-width: 22px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #e9ecef; display: flex;
+      align-items: center; justify-content: center;
+      font-weight: bold; margin-right: 14px;
+      flex-shrink: 0; color: #2c3e50;
+    }
+    .option-item.selected .option-letter { background: #28a745; color: #fff; }
+
+    /* ── Navigator Grid ── */
+    .nav-grid {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+    }
+    .nav-grid button {
+      width: 38px; height: 38px; border-radius: 6px;
+      font-weight: 600; font-size: 0.82rem;
+      border: 2px solid #dee2e6; background: #f8f9fa;
+      color: #2c3e50; cursor: pointer;
+    }
+    .nav-grid button.current {
+      background: #2c3e50; border-color: #2c3e50; color: #fff;
+    }
+    .nav-grid button.answered {
+      background: #28a745; border-color: #28a745; color: #fff;
     }
 
-    .question-nav {
-      display: flex; justify-content: space-between;
-      margin-top: 12px;
-    }
-
-    /* ── Palette Sidebar ── */
-    #paletteSidebar {
-      width: 220px; min-width: 220px;
-      background: #fff; border-left: 1px solid #dee2e6;
-      padding: 16px; position: sticky;
-      top: 105px; height: calc(100vh - 105px);
-      overflow-y: auto;
-    }
-    .palette-title {
-      font-weight: bold; font-size: 0.85rem;
-      color: #6c757d; margin-bottom: 10px;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    .palette-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr);
-      gap: 5px; margin-bottom: 16px;
-    }
-    .palette-btn {
-      width: 100%; aspect-ratio: 1;
-      border: none; border-radius: 5px;
-      font-size: 0.75rem; font-weight: bold;
-      background: #e9ecef; color: #495057;
-      cursor: pointer; transition: all 0.15s;
-    }
-    .palette-btn:hover { background: #adb5bd; color: #fff; }
-    .palette-btn.answered { background: #28a745; color: #fff; }
-    .palette-btn.current  {
-      outline: 3px solid #2c3e50; outline-offset: 1px;
-    }
-
-    .palette-legend {
-      display: flex; gap: 8px; flex-wrap: wrap;
-      font-size: 0.75rem; margin-bottom: 16px;
-    }
-    .legend-dot {
-      width: 12px; height: 12px; border-radius: 3px;
-      display: inline-block; margin-right: 3px;
-    }
-
-    /* ── Submit Button ── */
-    #submitBtn {
-      width: 100%; padding: 10px;
-      background: #e74c3c; color: #fff;
-      border: none; border-radius: 8px;
-      font-weight: bold; font-size: 0.95rem;
-      cursor: pointer; transition: background 0.2s;
-    }
-    #submitBtn:hover { background: #c0392b; }
-
-    /* ── Answer Summary in Sidebar ── */
-    .answered-summary {
-      background: #f8f9fa; border-radius: 8px;
-      padding: 10px; margin-bottom: 16px;
-      font-size: 0.8rem;
-    }
-    .answered-summary .row { margin: 0; }
-    .summary-stat { text-align: center; padding: 4px; }
-    .summary-stat .num { font-size: 1.1rem; font-weight: bold; }
-
-    @media (max-width: 768px) {
-      #paletteSidebar { display: none; }
-      #questionPanel  { padding: 12px; }
+    /* ── Submit Section ── */
+    .submit-section {
+      background: #fff; border-radius: 12px;
+      padding: 20px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<!-- ── Top Bar ─────────────────────────────────────────────── -->
-<div id="topBar">
-  <div class="exam-title">
-    <i class="bi bi-mortarboard-fill me-2"></i>
+<!-- ── Top Bar ───────────────────────────────────────────────── -->
+<div class="exam-header">
+  <div class="fw-bold fs-6">
     JAMB <%= exam.examType %> Exam
   </div>
-  <div id="timerBox">
-    <i class="bi bi-clock me-1"></i>
-    <span id="timerDisplay">--:--</span>
+  <div class="d-flex align-items-center gap-3">
+    <div class="timer-box" id="timerBox">
+      ⏱ <span id="timer">--:--</span>
+    </div>
+    <button type="button" onclick="confirmSubmit()"
+      style="background:#28a745; border:none; color:#fff;
+             padding:6px 18px; border-radius:8px;
+             font-weight:bold; cursor:pointer;">
+      Submit Exam ✓
+    </button>
   </div>
 </div>
 
-<!-- ── Subject Tabs ─────────────────────────────────────────── -->
-<div id="subjectTabs">
+<!-- ── Subject Tabs ──────────────────────────────────────────── -->
+<div class="subject-tabs">
   <% subjectsWithQuestions.forEach(function(subject, index) { %>
     <div class="subject-tab <%= index === 0 ? 'active' : '' %>"
       id="tab-<%= subject.subjectId._id %>"
       onclick="switchSubject('<%= subject.subjectId._id %>')">
       <%= subject.subjectId.name %>
-      <span class="tab-progress" id="tabprog-<%= subject.subjectId._id %>">
+      <span class="tab-badge" id="tabprog-<%= subject.subjectId._id %>">
         0 / <%= subject.questions.length %>
       </span>
     </div>
   <% }) %>
 </div>
 
-<!-- ── Main Content ─────────────────────────────────────────── -->
-<div id="mainContent">
+<!-- ── Exam Body ─────────────────────────────────────────────── -->
+<div class="exam-body">
+  <% subjectsWithQuestions.forEach(function(subject, sIndex) { %>
+    <div class="subject-panel <%= sIndex === 0 ? 'active' : '' %>"
+      id="panel-<%= subject.subjectId._id %>">
 
-  <!-- Question Panel -->
-  <div id="questionPanel">
-    <% subjectsWithQuestions.forEach(function(subject, sIndex) { %>
-      <div class="subject-panel <%= sIndex === 0 ? 'active' : '' %>"
-        id="panel-<%= subject.subjectId._id %>">
+      <!-- Progress -->
+      <div class="d-flex justify-content-between small text-muted mb-2">
+        <span id="counter-<%= subject.subjectId._id %>">
+          Question 1 of <%= subject.questions.length %>
+        </span>
+        <span id="answeredLabel-<%= subject.subjectId._id %>">
+          0 of <%= subject.questions.length %> answered
+        </span>
+      </div>
+      <div class="progress mb-4" style="height:6px;">
+        <div class="progress-bar bg-success"
+          id="progressBar-<%= subject.subjectId._id %>"
+          style="width:0%;">
+        </div>
+      </div>
 
-        <% subject.questions.forEach(function(question, qIndex) { %>
-          <div class="question-card"
-            id="qcard-<%= subject.subjectId._id %>-<%= qIndex %>">
+      <!-- Question Cards — one visible at a time -->
+      <% subject.questions.forEach(function(question, qIndex) { %>
+        <div class="question-card <%= qIndex === 0 ? '' : 'd-none' %>"
+          id="qcard-<%= subject.subjectId._id %>-<%= qIndex %>">
 
-            <div class="question-number">
-              Question <%= qIndex + 1 %> of <%= subject.questions.length %>
+          <p class="text-muted small mb-2">
+            Question <%= qIndex + 1 %> of <%= subject.questions.length %>
+          </p>
+          <p class="fs-6 fw-semibold mb-3"><%= question.questionText %></p>
+
+          <% if (question.image) { %>
+            <div class="mb-3">
+              <img src="<%= question.image %>" class="img-fluid rounded"
+                style="max-width:400px;" />
             </div>
+          <% } %>
 
-            <div class="question-text">
-              <%= question.questionText %>
+          <!-- Options -->
+          <% question.options.forEach(function(option, oIndex) { %>
+            <div class="option-item"
+              id="opt-<%= subject.subjectId._id %>-<%= qIndex %>-<%= oIndex %>"
+              onclick="selectOption(
+                '<%= subject.subjectId._id %>',
+                '<%= question._id %>',
+                '<%= option.replace(/'/g, "\\'") %>',
+                <%= qIndex %>,
+                <%= oIndex %>
+              )">
+              <div class="option-letter"><%= ['A','B','C','D'][oIndex] %></div>
+              <span><%= option %></span>
             </div>
+          <% }) %>
 
-            <%
-              var letters = ['A', 'B', 'C', 'D'];
-            %>
-            <% question.options.forEach(function(option, oIndex) { %>
-              <label class="option-label"
-                id="opt-<%= question._id %>-<%= oIndex %>"
-                onclick="selectAnswer(
-                  '<%= subject.subjectId._id %>',
-                  '<%= question._id %>',
-                  '<%= option.replace(/'/g, "\\'") %>',
-                  '<%= oIndex %>',
-                  <%= question.options.length %>
-                )">
-                <input
-                  type="radio"
-                  class="option-radio"
-                  name="q-<%= question._id %>"
-                  value="<%= option %>"
-                />
-                <span class="option-letter"><%= letters[oIndex] %>.</span>
-                <span><%= option %></span>
-              </label>
-            <% }) %>
-
-            <div class="question-nav">
-              <button class="btn btn-sm btn-outline-secondary"
-                onclick="scrollToQuestion('<%= subject.subjectId._id %>', <%= qIndex - 1 %>)"
-                <%= qIndex === 0 ? 'disabled' : '' %>>
-                &larr; Prev
-              </button>
-              <button class="btn btn-sm btn-outline-primary"
-                onclick="scrollToQuestion('<%= subject.subjectId._id %>', <%= qIndex + 1 %>)"
-                <%= qIndex === subject.questions.length - 1 ? 'disabled' : '' %>>
-                Next &rarr;
-              </button>
-            </div>
-
+          <!-- Prev / Next -->
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-outline-secondary"
+              onclick="navigateQuestion('<%= subject.subjectId._id %>', <%= qIndex - 1 %>)"
+              <%= qIndex === 0 ? 'disabled' : '' %>>
+              ← Previous
+            </button>
+            <button type="button" class="btn btn-dark"
+              onclick="navigateQuestion('<%= subject.subjectId._id %>', <%= qIndex + 1 %>)"
+              <%= qIndex === subject.questions.length - 1 ? 'disabled' : '' %>>
+              Next →
+            </button>
           </div>
-        <% }) %>
 
-      </div>
-    <% }) %>
-  </div>
-
-  <!-- Palette Sidebar -->
-  <div id="paletteSidebar">
-
-    <!-- Answer Summary -->
-    <div class="answered-summary">
-      <div class="row">
-        <div class="col-6 summary-stat border-end">
-          <div class="num text-success" id="totalAnswered">0</div>
-          <div class="text-muted">Answered</div>
         </div>
-        <div class="col-6 summary-stat">
-          <div class="num text-danger" id="totalUnanswered">180</div>
-          <div class="text-muted">Remaining</div>
+      <% }) %>
+
+      <!-- Question Navigator -->
+      <div class="question-card mt-2">
+        <p class="fw-bold mb-1" style="font-size:0.9rem;">Jump to Question</p>
+        <div class="d-flex gap-3 mb-2" style="font-size:0.78rem; color:#555;">
+          <span>
+            <span style="display:inline-block;width:12px;height:12px;
+              background:#2c3e50;border-radius:2px;margin-right:3px;"></span>Current
+          </span>
+          <span>
+            <span style="display:inline-block;width:12px;height:12px;
+              background:#28a745;border-radius:2px;margin-right:3px;"></span>Answered
+          </span>
+          <span>
+            <span style="display:inline-block;width:12px;height:12px;
+              background:#f8f9fa;border:2px solid #dee2e6;
+              border-radius:2px;margin-right:3px;"></span>Unanswered
+          </span>
         </div>
-      </div>
-    </div>
-
-    <!-- Palette Legend -->
-    <div class="palette-legend">
-      <span>
-        <span class="legend-dot" style="background:#28a745"></span>Answered
-      </span>
-      <span>
-        <span class="legend-dot" style="background:#e9ecef; border:1px solid #adb5bd"></span>Not answered
-      </span>
-    </div>
-
-    <!-- Per Subject Palette -->
-    <% subjectsWithQuestions.forEach(function(subject) { %>
-      <div id="palette-<%= subject.subjectId._id %>" style="display:none;">
-        <div class="palette-title"><%= subject.subjectId.name %></div>
-        <div class="palette-grid">
+        <div class="nav-grid" id="navGrid-<%= subject.subjectId._id %>">
           <% subject.questions.forEach(function(question, qIndex) { %>
-            <button
-              class="palette-btn"
-              id="pbtn-<%= subject.subjectId._id %>-<%= qIndex %>"
-              onclick="scrollToQuestion('<%= subject.subjectId._id %>', <%= qIndex %>)">
+            <button type="button"
+              id="navBtn-<%= subject.subjectId._id %>-<%= qIndex %>"
+              onclick="jumpTo('<%= subject.subjectId._id %>', <%= qIndex %>)"
+              class="<%= qIndex === 0 ? 'current' : '' %>">
               <%= qIndex + 1 %>
             </button>
           <% }) %>
         </div>
       </div>
-    <% }) %>
 
-    <!-- Submit Button -->
-    <button id="submitBtn" onclick="confirmSubmit()">
-      <i class="bi bi-check2-square me-1"></i> Submit Exam
-    </button>
+      <!-- Submit Section -->
+      <div class="submit-section">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <p class="mb-0 fw-semibold">
+              Attempted:
+              <strong id="attempted-<%= subject.subjectId._id %>"
+                class="text-success">0</strong>
+              / <%= subject.questions.length %>
+            </p>
+            <p class="mb-0 small text-muted">
+              Unanswered:
+              <strong id="unanswered-<%= subject.subjectId._id %>">
+                <%= subject.questions.length %>
+              </strong>
+            </p>
+          </div>
+        </div>
+      </div>
 
-  </div>
-
+    </div>
+  <% }) %>
 </div>
 
 <!-- ── Hidden Submit Form ────────────────────────────────────── -->
@@ -321,249 +289,225 @@
 </form>
 
 <script>
-// ============================================================
-// DATA
-// ============================================================
-var JAMB_TIMER_SECONDS = <%= jambTimer %> * 60;
-var timerInterval;
+  // ── Data ────────────────────────────────────────────────────
+  var JAMB_SECONDS  = <%= jambTimer %> * 60;
+  var timerInterval;
+  var examSubmitted = false;
+  var isSubmitting  = false;
 
-// answers[subjectId][questionId] = selectedOption
-var answers = {};
+  // answers[subjectId][questionId] = selectedOption
+  var answers = {};
 
-// subjects metadata
-var subjectsMeta = [];
-<% subjectsWithQuestions.forEach(function(subject) { %>
-  subjectsMeta.push({
-    id:    '<%= subject.subjectId._id %>',
-    name:  '<%= subject.subjectId.name %>',
-    total: <%= subject.questions.length %>
-  });
-  answers['<%= subject.subjectId._id %>'] = {};
-<% }) %>
+  // current question index per subject
+  var currentIndex = {};
 
-var activeSubjectId = subjectsMeta[0].id;
+  // subjects metadata
+  var subjectsMeta = [];
+  <% subjectsWithQuestions.forEach(function(subject) { %>
+    subjectsMeta.push({
+      id:    '<%= subject.subjectId._id %>',
+      total: <%= subject.questions.length %>
+    });
+    answers['<%= subject.subjectId._id %>']      = {};
+    currentIndex['<%= subject.subjectId._id %>'] = 0;
+  <% }) %>
 
-// ============================================================
-// TIMER
-// ============================================================
-function startTimer() {
-  var remaining = JAMB_TIMER_SECONDS;
-  updateTimerDisplay(remaining);
+  var activeSubjectId = subjectsMeta.length > 0 ? subjectsMeta[0].id : '';
 
-  timerInterval = setInterval(function() {
-    remaining--;
+  // ── Switch Subject Tab ──────────────────────────────────────
+  function switchSubject(subjectId) {
+    // Hide all panels
+    document.querySelectorAll('.subject-panel').forEach(function(p) {
+      p.classList.remove('active');
+    });
+    // Deactivate all tabs
+    document.querySelectorAll('.subject-tab').forEach(function(t) {
+      t.classList.remove('active');
+    });
+
+    // Show selected
+    var panel = document.getElementById('panel-' + subjectId);
+    if (panel) panel.classList.add('active');
+    var tab = document.getElementById('tab-' + subjectId);
+    if (tab) tab.classList.add('active');
+
+    activeSubjectId = subjectId;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Select Option ───────────────────────────────────────────
+  function selectOption(subjectId, questionId, option, qIndex, oIndex) {
+    answers[subjectId][questionId] = option;
+
+    // Update option styles for this subject/question
+    for (var i = 0; i < 4; i++) {
+      var el = document.getElementById('opt-' + subjectId + '-' + qIndex + '-' + i);
+      if (el) el.classList.remove('selected');
+    }
+    var chosen = document.getElementById('opt-' + subjectId + '-' + qIndex + '-' + oIndex);
+    if (chosen) chosen.classList.add('selected');
+
+    // Update nav button
+    var navBtn = document.getElementById('navBtn-' + subjectId + '-' + qIndex);
+    if (navBtn) {
+      navBtn.classList.remove('current');
+      navBtn.classList.add('answered');
+    }
+
+    updateSummary(subjectId);
+    updateTabProgress(subjectId);
+  }
+
+  // ── Jump To Question ────────────────────────────────────────
+  function jumpTo(subjectId, index) {
+    var oldIndex = currentIndex[subjectId];
+
+    // Hide old card
+    var oldCard = document.getElementById('qcard-' + subjectId + '-' + oldIndex);
+    if (oldCard) oldCard.classList.add('d-none');
+
+    // Old nav button — keep answered style if answered, else remove current
+    var oldBtn = document.getElementById('navBtn-' + subjectId + '-' + oldIndex);
+    if (oldBtn) oldBtn.classList.remove('current');
+
+    // Show new card
+    currentIndex[subjectId] = index;
+    var newCard = document.getElementById('qcard-' + subjectId + '-' + index);
+    if (newCard) newCard.classList.remove('d-none');
+
+    // New nav button
+    var newBtn = document.getElementById('navBtn-' + subjectId + '-' + index);
+    if (newBtn) newBtn.classList.add('current');
+
+    updateCounter(subjectId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Navigate Prev / Next ────────────────────────────────────
+  function navigateQuestion(subjectId, index) {
+    var meta = subjectsMeta.find(function(s) { return s.id === subjectId; });
+    if (!meta) return;
+    if (index < 0 || index >= meta.total) return;
+    jumpTo(subjectId, index);
+  }
+
+  // ── Update Counter ──────────────────────────────────────────
+  function updateCounter(subjectId) {
+    var meta = subjectsMeta.find(function(s) { return s.id === subjectId; });
+    if (!meta) return;
+    var idx = currentIndex[subjectId];
+    var counter = document.getElementById('counter-' + subjectId);
+    if (counter) {
+      counter.textContent = 'Question ' + (idx + 1) + ' of ' + meta.total;
+    }
+    var pct = ((idx + 1) / meta.total) * 100;
+    var bar = document.getElementById('progressBar-' + subjectId);
+    if (bar) bar.style.width = pct + '%';
+  }
+
+  // ── Update Summary ──────────────────────────────────────────
+  function updateSummary(subjectId) {
+    var meta = subjectsMeta.find(function(s) { return s.id === subjectId; });
+    if (!meta) return;
+    var count = Object.keys(answers[subjectId] || {}).length;
+
+    var attempted  = document.getElementById('attempted-' + subjectId);
+    var unanswered = document.getElementById('unanswered-' + subjectId);
+    var label      = document.getElementById('answeredLabel-' + subjectId);
+
+    if (attempted)  attempted.textContent  = count;
+    if (unanswered) unanswered.textContent = meta.total - count;
+    if (label)      label.textContent      = count + ' of ' + meta.total + ' answered';
+  }
+
+  // ── Update Tab Progress Badge ───────────────────────────────
+  function updateTabProgress(subjectId) {
+    var meta = subjectsMeta.find(function(s) { return s.id === subjectId; });
+    if (!meta) return;
+    var count = Object.keys(answers[subjectId] || {}).length;
+    var prog  = document.getElementById('tabprog-' + subjectId);
+    if (prog) prog.textContent = count + ' / ' + meta.total;
+  }
+
+  // ── Timer ───────────────────────────────────────────────────
+  function startTimer() {
+    var remaining = JAMB_SECONDS;
     updateTimerDisplay(remaining);
 
-    var timerBox = document.getElementById('timerBox');
-
-    if (remaining <= 300 && remaining > 60) {
-      timerBox.className = 'warning';
-    } else if (remaining <= 60) {
-      timerBox.className = 'danger';
-    }
-
-    if (remaining <= 0) {
-      clearInterval(timerInterval);
-      autoSubmit();
-    }
-  }, 1000);
-}
-
-function updateTimerDisplay(seconds) {
-  var h = Math.floor(seconds / 3600);
-  var m = Math.floor((seconds % 3600) / 60);
-  var s = seconds % 60;
-  var display = '';
-  if (h > 0) {
-    display = pad(h) + ':' + pad(m) + ':' + pad(s);
-  } else {
-    display = pad(m) + ':' + pad(s);
+    timerInterval = setInterval(function() {
+      remaining--;
+      updateTimerDisplay(remaining);
+      var box = document.getElementById('timerBox');
+      if (remaining <= 60) {
+        if (box) box.classList.add('danger');
+      }
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        autoSubmit();
+      }
+    }, 1000);
   }
-  document.getElementById('timerDisplay').textContent = display;
-}
 
-function pad(n) {
-  return n < 10 ? '0' + n : '' + n;
-}
-
-// ============================================================
-// SWITCH SUBJECT TAB
-// ============================================================
-function switchSubject(subjectId) {
-  // Hide all panels
-  var panels = document.querySelectorAll('.subject-panel');
-  panels.forEach(function(p) { p.classList.remove('active'); });
-
-  // Deactivate all tabs
-  var tabs = document.querySelectorAll('.subject-tab');
-  tabs.forEach(function(t) { t.classList.remove('active'); });
-
-  // Hide all palettes
-  subjectsMeta.forEach(function(s) {
-    var pal = document.getElementById('palette-' + s.id);
-    if (pal) pal.style.display = 'none';
-  });
-
-  // Show selected panel
-  var panel = document.getElementById('panel-' + subjectId);
-  if (panel) panel.classList.add('active');
-
-  // Activate tab
-  var tab = document.getElementById('tab-' + subjectId);
-  if (tab) tab.classList.add('active');
-
-  // Show palette
-  var palette = document.getElementById('palette-' + subjectId);
-  if (palette) palette.style.display = 'block';
-
-  activeSubjectId = subjectId;
-}
-
-// ============================================================
-// SELECT ANSWER
-// ============================================================
-function selectAnswer(subjectId, questionId, option, optionIndex, totalOptions) {
-  // Save answer
-  answers[subjectId][questionId] = option;
-
-  // Update option label styles
-  for (var i = 0; i < totalOptions; i++) {
-    var lbl = document.getElementById('opt-' + questionId + '-' + i);
-    if (lbl) lbl.classList.remove('selected');
+  function updateTimerDisplay(seconds) {
+    var h = Math.floor(seconds / 3600);
+    var m = Math.floor((seconds % 3600) / 60);
+    var s = seconds % 60;
+    var display = h > 0
+      ? pad(h) + ':' + pad(m) + ':' + pad(s)
+      : pad(m) + ':' + pad(s);
+    document.getElementById('timer').textContent = display;
   }
-  var selected = document.getElementById('opt-' + questionId + '-' + optionIndex);
-  if (selected) selected.classList.add('selected');
 
-  // Check the radio
-  var radios = document.querySelectorAll('input[name="q-' + questionId + '"]');
-  if (radios[optionIndex]) radios[optionIndex].checked = true;
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-  // Update palette for this subject
-  updatePalette(subjectId);
+  // ── Submit ──────────────────────────────────────────────────
+  function confirmSubmit() {
+    if (examSubmitted) return;
 
-  // Update tab progress
-  updateTabProgress(subjectId);
+    var totalAnswered = 0;
+    subjectsMeta.forEach(function(s) {
+      totalAnswered += Object.keys(answers[s.id] || {}).length;
+    });
+    var unanswered = 180 - totalAnswered;
 
-  // Update total summary
-  updateTotalSummary();
-}
+    var msg = 'Are you sure you want to submit?\n\n' +
+      'Answered  : ' + totalAnswered + ' / 180\n' +
+      'Unanswered: ' + unanswered + '\n\n' +
+      'You cannot change your answers after submitting.';
 
-// ============================================================
-// SCROLL TO QUESTION
-// ============================================================
-function scrollToQuestion(subjectId, qIndex) {
-  if (qIndex < 0) return;
-  var card = document.getElementById('qcard-' + subjectId + '-' + qIndex);
-  if (card) {
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (confirm(msg)) doSubmit();
   }
-}
 
-// ============================================================
-// UPDATE PALETTE
-// ============================================================
-function updatePalette(subjectId) {
-  var subAnswers = answers[subjectId] || {};
-  var meta = subjectsMeta.find(function(s) { return s.id === subjectId; });
-  if (!meta) return;
-
-  for (var i = 0; i < meta.total; i++) {
-    var btn = document.getElementById('pbtn-' + subjectId + '-' + i);
-    if (!btn) continue;
-    // Get question id from the card
-    var card = document.getElementById('qcard-' + subjectId + '-' + i);
-    if (!card) continue;
-    var radios = card.querySelectorAll('.option-radio');
-    if (radios.length === 0) continue;
-    var qName = radios[0].name; // q-questionId
-    var qId   = qName.replace('q-', '');
-
-    if (subAnswers[qId]) {
-      btn.classList.add('answered');
-    } else {
-      btn.classList.remove('answered');
-    }
-  }
-}
-
-// ============================================================
-// UPDATE TAB PROGRESS
-// ============================================================
-function updateTabProgress(subjectId) {
-  var subAnswers = answers[subjectId] || {};
-  var count = Object.keys(subAnswers).length;
-  var meta  = subjectsMeta.find(function(s) { return s.id === subjectId; });
-  if (!meta) return;
-  var prog = document.getElementById('tabprog-' + subjectId);
-  if (prog) prog.textContent = count + ' / ' + meta.total;
-}
-
-// ============================================================
-// UPDATE TOTAL SUMMARY
-// ============================================================
-function updateTotalSummary() {
-  var totalAnswered = 0;
-  subjectsMeta.forEach(function(s) {
-    totalAnswered += Object.keys(answers[s.id] || {}).length;
-  });
-  var totalQuestions = 180;
-  document.getElementById('totalAnswered').textContent   = totalAnswered;
-  document.getElementById('totalUnanswered').textContent = totalQuestions - totalAnswered;
-}
-
-// ============================================================
-// CONFIRM AND SUBMIT
-// ============================================================
-function confirmSubmit() {
-  var totalAnswered = 0;
-  subjectsMeta.forEach(function(s) {
-    totalAnswered += Object.keys(answers[s.id] || {}).length;
-  });
-  var unanswered = 180 - totalAnswered;
-
-  var message = 'Are you sure you want to submit?\n\n' +
-    'Answered  : ' + totalAnswered + ' / 180\n' +
-    'Unanswered: ' + unanswered + '\n\n' +
-    'You cannot change your answers after submitting.';
-
-  if (confirm(message)) {
+  function autoSubmit() {
+    alert('Time is up! Your exam is being submitted automatically.');
     doSubmit();
   }
-}
 
-function autoSubmit() {
-  alert('Time is up! Your exam is being submitted automatically.');
-  doSubmit();
-}
-
-function doSubmit() {
-  clearInterval(timerInterval);
-
-  // Build jambAnswersJson
-  // Format: { subjectId: { questionId: selectedOption } }
-  document.getElementById('jambAnswersJson').value = JSON.stringify(answers);
-  document.getElementById('submitForm').submit();
-}
-
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('load', function() {
-  // Show first subject palette
-  if (subjectsMeta.length > 0) {
-    var firstPalette = document.getElementById('palette-' + subjectsMeta[0].id);
-    if (firstPalette) firstPalette.style.display = 'block';
+  function doSubmit() {
+    if (examSubmitted) return;
+    examSubmitted = true;
+    isSubmitting  = true;
+    clearInterval(timerInterval);
+    document.getElementById('jambAnswersJson').value = JSON.stringify(answers);
+    document.getElementById('submitForm').submit();
   }
 
-  // Start timer
-  startTimer();
+  // ── Init ────────────────────────────────────────────────────
+  window.addEventListener('load', function() {
+    startTimer();
 
-  // Prevent accidental navigation
-  window.addEventListener('beforeunload', function(e) {
-    e.preventDefault();
-    e.returnValue = '';
+    // Prevent accidental navigation
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', function() {
+      history.pushState(null, null, location.href);
+    });
+    window.addEventListener('beforeunload', function(e) {
+      if (!isSubmitting && !examSubmitted) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
   });
-});
 </script>
 
 </body>
